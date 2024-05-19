@@ -42,3 +42,11 @@ const { title } = Astro.props;
   @tailwind components;
   @tailwind utilities;
 </style>
+
+<script>
+  import { currentTheme } from "../stores/app";
+
+  currentTheme.subscribe((value) => {
+    document.documentElement.classList.toggle("dark", value === "dark");
+  });
+</script>

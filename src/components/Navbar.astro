@@ -1,18 +1,20 @@
 ---
-import { Tooltip } from "@nextui-org/react";
 import { Home, Plane } from "lucide-react";
+import { ThemeButton } from "./ThemeButton";
 ---
 
-<nav class="flex flex-col items-center gap-4 px-2 sm:py-5">
-  <a
-    href="/"
-    class="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
-  >
-    <Plane className="h-4 w-4 transition-all group-hover:scale-110" />
-    <span class="sr-only">Acme Inc</span>
-  </a>
+<nav
+  class="min-h-full flex flex-col items-center justify-between gap-4 px-2 sm:py-5"
+>
+  <div class="flex flex-col gap-4">
+    <a
+      href="#"
+      class="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
+    >
+      <Plane className="h-4 w-4 transition-all group-hover:scale-110" />
+      <span class="sr-only">Airline</span>
+    </a>
 
-  <Tooltip content="Dashboard" client:load>
     <a
       href="/"
       class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
@@ -20,5 +22,7 @@ import { Home, Plane } from "lucide-react";
       <Home className="h-5 w-5" />
       <span class="sr-only">Dashboard</span>
     </a>
-  </Tooltip>
+  </div>
+
+  <ThemeButton client:load />
 </nav>
