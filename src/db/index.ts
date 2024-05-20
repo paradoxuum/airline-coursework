@@ -9,4 +9,4 @@ const dbName = import.meta.env.DB_NAME;
 const queryClient = postgres(
 	`postgres://${dbUser}:${dbPassword}@${dbHost}/${dbName}`,
 );
-const db = drizzle(queryClient);
+export const db = drizzle(queryClient);
