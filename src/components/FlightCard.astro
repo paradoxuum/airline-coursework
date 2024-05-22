@@ -1,0 +1,15 @@
+---
+import { FlightTable } from "@/components/flights";
+import { AddFlightButton } from "@/components/flights/AddFlightButton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+---
+
+<Card className="mx-8">
+  <CardHeader>
+    <CardTitle>Flights</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <AddFlightButton client:load />
+    <FlightTable client:only="react" />
+  </CardContent>
+</Card>
