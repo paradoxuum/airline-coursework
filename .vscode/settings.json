@@ -14,5 +14,6 @@
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "biomejs.biome"
 	},
-	"typescript.preferences.preferTypeOnlyAutoImports": true
+	"typescript.preferences.preferTypeOnlyAutoImports": true,
+	"typescript.preferences.importModuleSpecifier": "non-relative"
 }
