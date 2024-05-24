@@ -1,16 +1,18 @@
+import {
+	createFlight,
+	deleteFlight,
+	getFlights,
+	updateFlight,
+	type Flight,
+} from "@/api";
 import { ColumnHeader } from "@/components/ColumnHeader";
 import { DataTable } from "@/components/DataTable";
-import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import { AddFlightButton } from "@/components/flights/AddFlightButton";
+import { FlightActions } from "@/components/flights/FlightActions";
+import { FlightUpdate } from "@/components/flights/FlightUpdate";
 import { client } from "@/stores/app";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
 	getCoreRowModel,
 	getSortedRowModel,
@@ -18,25 +20,67 @@ import {
 	type ColumnDef,
 	type SortingState,
 } from "@tanstack/react-table";
-import { actions } from "astro:actions";
-import { Ellipsis } from "lucide-react";
 import { useMemo, useState } from "react";
-
-interface Flight {
-	id: number;
-	departureDate: string;
-	arrivalDate: string;
-}
+import { toast } from "sonner";
 
 export function FlightTable() {
 	const query = useQuery(
 		{
 			queryKey: ["flights"],
-			queryFn: () => actions.getFlights(),
+			queryFn: getFlights,
 		},
 		client,
 	);
+
+	const createMutation = useMutation(
+		{
+			mutationFn: createFlight,
+			onSuccess: (id) => {
+				toast.success(`Flight ${id} created`);
+				client.invalidateQueries({ queryKey: ["flights"] });
+			},
+			onError: (err) => {
+				toast.error("Failed to create flight");
+				console.error("Failed to create flight", err);
+			},
+		},
+		client,
+	);
+
+	const updateMutation = useMutation(
+		{
+			mutationFn: updateFlight,
+			onSuccess: (_, input) => {
+				toast.success(`Flight ${input.id} updated`);
+				client.invalidateQueries({ queryKey: ["flights"] });
+			},
+			onError: (err, input) => {
+				toast.error(`Failed to update flight ${input.id}`);
+				console.error("Failed to update flight", err);
+			},
+		},
+		client,
+	);
+
+	const deleteMutation = useMutation(
+		{
+			mutationFn: deleteFlight,
+			onSuccess: (_, id) => {
+				toast.success(`Flight ${id} deleted`);
+				client.invalidateQueries({ queryKey: ["flights"] });
+			},
+			onError: (err, id) => {
+				toast.error(`Failed to delete flight ${id}`);
+				console.error("Failed to delete flight", err);
+			},
+		},
+		client,
+	);
+
 	const [sorting, setSorting] = useState<SortingState>([]);
+	const [openDialog, setOpenDialog] = useState<
+		{ type: "delete" | "update"; flight: Flight } | undefined
+	>();
 
 	const columns = useMemo<ColumnDef<Flight>[]>(
 		() => [
@@ -51,42 +95,39 @@ export function FlightTable() {
 				header: ({ column }) => {
 					return <ColumnHeader column={column} title="Departure Date" />;
 				},
+				cell: ({ row }) => {
+					const departure = row.original.departure;
+					return <p>{departure.toLocaleString()}</p>;
+				},
 			},
 			{
 				accessorKey: "arrivalDate",
 				header: ({ column }) => {
 					return <ColumnHeader column={column} title="Arrival Date" />;
 				},
+				cell: ({ row }) => {
+					const arrival = row.original.arrival;
+					return <p>{arrival.toLocaleString()}</p>;
+				},
 			},
 			{
 				id: "actions",
 				cell: ({ row }) => {
 					const flight = row.original;
-
 					return (
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" className="h-8 w-8 p-0">
-									<span className="sr-only">Open menu</span>
-									<Ellipsis className="h-4 w-4" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuLabel>Actions</DropdownMenuLabel>
-								<DropdownMenuItem
-									onClick={() =>
-										navigator.clipboard.writeText(flight.id.toString())
-									}
-								>
-									Copy flight ID
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem>Update</DropdownMenuItem>
-								<DropdownMenuItem className="text-red-500">
-									Delete
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+						<FlightActions
+							flight={flight}
+							onDialogChange={(dialog) =>
+								setOpenDialog(
+									dialog !== undefined
+										? {
+												type: dialog,
+												flight,
+											}
+										: undefined,
+								)
+							}
+						/>
 					);
 				},
 			},
@@ -105,5 +146,42 @@ export function FlightTable() {
 		},
 	});
 
-	return <DataTable table={table} />;
+	return (
+		<>
+			<AddFlightButton onSubmit={(data) => createMutation.mutate(data)} />
+
+			<DeleteDialog
+				loading={deleteMutation.isPending}
+				open={openDialog?.type === "delete"}
+				onOpenChange={(open) => {
+					if (!open) setOpenDialog(undefined);
+				}}
+				onConfirm={() => {
+					const id = openDialog?.flight.id;
+					if (deleteMutation.isPending || id === undefined) return;
+					deleteMutation.mutate(id);
+					setOpenDialog(undefined);
+				}}
+			/>
+
+			<FlightUpdate
+				flight={openDialog?.flight}
+				onSubmit={(data) => {
+					const id = openDialog?.flight.id;
+					if (updateMutation.isPending || id === undefined) return;
+					updateMutation.mutate({
+						...data,
+						id,
+					});
+					setOpenDialog(undefined);
+				}}
+				open={openDialog?.type === "update"}
+				onOpenChange={(open) => {
+					if (!open) setOpenDialog(undefined);
+				}}
+			/>
+
+			<DataTable table={table} />
+		</>
+	);
 }

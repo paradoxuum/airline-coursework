@@ -1,6 +1,5 @@
 ---
 import { FlightTable } from "@/components/flights";
-import { AddFlightButton } from "@/components/flights/AddFlightButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 ---
 
@@ -9,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
     <CardTitle>Flights</CardTitle>
   </CardHeader>
   <CardContent>
-    <AddFlightButton client:load />
     <FlightTable client:only="react" />
   </CardContent>
 </Card>
