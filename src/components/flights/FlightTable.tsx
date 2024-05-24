@@ -11,8 +11,9 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { AddFlightButton } from "@/components/flights/AddFlightButton";
 import { FlightActions } from "@/components/flights/FlightActions";
 import { FlightUpdate } from "@/components/flights/FlightUpdate";
+import { useApiMutation } from "@/lib/useApiMutation";
 import { client } from "@/stores/app";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
 	getCoreRowModel,
 	getSortedRowModel,
@@ -21,9 +22,13 @@ import {
 	type SortingState,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 
 export function FlightTable() {
+	const [sorting, setSorting] = useState<SortingState>([]);
+	const [openDialog, setOpenDialog] = useState<
+		{ type: "delete" | "update"; flight: Flight } | undefined
+	>();
+
 	const query = useQuery(
 		{
 			queryKey: ["flights"],
@@ -32,55 +37,13 @@ export function FlightTable() {
 		client,
 	);
 
-	const createMutation = useMutation(
-		{
-			mutationFn: createFlight,
-			onSuccess: (id) => {
-				toast.success(`Flight ${id} created`);
-				client.invalidateQueries({ queryKey: ["flights"] });
-			},
-			onError: (err) => {
-				toast.error("Failed to create flight");
-				console.error("Failed to create flight", err);
-			},
-		},
-		client,
-	);
-
-	const updateMutation = useMutation(
-		{
-			mutationFn: updateFlight,
-			onSuccess: (_, input) => {
-				toast.success(`Flight ${input.id} updated`);
-				client.invalidateQueries({ queryKey: ["flights"] });
-			},
-			onError: (err, input) => {
-				toast.error(`Failed to update flight ${input.id}`);
-				console.error("Failed to update flight", err);
-			},
-		},
-		client,
-	);
-
-	const deleteMutation = useMutation(
-		{
-			mutationFn: deleteFlight,
-			onSuccess: (_, id) => {
-				toast.success(`Flight ${id} deleted`);
-				client.invalidateQueries({ queryKey: ["flights"] });
-			},
-			onError: (err, id) => {
-				toast.error(`Failed to delete flight ${id}`);
-				console.error("Failed to delete flight", err);
-			},
-		},
-		client,
-	);
-
-	const [sorting, setSorting] = useState<SortingState>([]);
-	const [openDialog, setOpenDialog] = useState<
-		{ type: "delete" | "update"; flight: Flight } | undefined
-	>();
+	const mutations = useApiMutation<Flight, Omit<Flight, "id">>({
+		create: createFlight,
+		update: updateFlight,
+		delete: deleteFlight,
+		name: "flight",
+		key: ["flights"],
+	});
 
 	const columns = useMemo<ColumnDef<Flight>[]>(
 		() => [
@@ -148,18 +111,18 @@ export function FlightTable() {
 
 	return (
 		<>
-			<AddFlightButton onSubmit={(data) => createMutation.mutate(data)} />
+			<AddFlightButton onSubmit={(data) => mutations.create.mutate(data)} />
 
 			<DeleteDialog
-				loading={deleteMutation.isPending}
+				loading={mutations.delete.isPending}
 				open={openDialog?.type === "delete"}
 				onOpenChange={(open) => {
 					if (!open) setOpenDialog(undefined);
 				}}
 				onConfirm={() => {
 					const id = openDialog?.flight.id;
-					if (deleteMutation.isPending || id === undefined) return;
-					deleteMutation.mutate(id);
+					if (mutations.delete.isPending || id === undefined) return;
+					mutations.delete.mutate(id);
 					setOpenDialog(undefined);
 				}}
 			/>
@@ -168,8 +131,8 @@ export function FlightTable() {
 				flight={openDialog?.flight}
 				onSubmit={(data) => {
 					const id = openDialog?.flight.id;
-					if (updateMutation.isPending || id === undefined) return;
-					updateMutation.mutate({
+					if (mutations.update.isPending || id === undefined) return;
+					mutations.update.mutate({
 						...data,
 						id,
 					});

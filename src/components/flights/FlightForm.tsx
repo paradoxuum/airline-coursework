@@ -1,13 +1,13 @@
 import { flightSchema } from "@/api";
-import { DatePicker } from "@/components/flights/DatePicker";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
+import { DatePicker } from "@/components/ui/DatePicker";
 import {
 	Form,
 	FormControl,
 	FormField,
 	FormItem,
 	FormLabel,
-} from "@/components/ui/form";
+} from "@/components/ui/Form";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

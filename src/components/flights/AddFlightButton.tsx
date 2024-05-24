@@ -1,6 +1,6 @@
 import type { Flight } from "@/api";
 import { FlightForm } from "@/components/flights/FlightForm";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
 	Sheet,
 	SheetContent,
@@ -8,7 +8,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 	SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@/components/ui/Sheet";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
