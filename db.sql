@@ -1,3 +1,7 @@
+DROP TABLE IF EXISTS passengers,staff,airplanes,airports;
+DROP TABLE IF EXISTS aircraft_ratings,pilot_ratings;
+DROP TABLE IF EXISTS flight_passengers,flight_staff,flight_stops,flights;
+
 CREATE TABLE passengers (
     passenger_id SERIAL PRIMARY KEY,
     first_name VARCHAR(50) NOT NULL,
@@ -17,7 +21,7 @@ CREATE TABLE staff (
     CONSTRAINT chk_phone CHECK (phone not like '%[^0-9]%')
 );
 
-CREATE TABLE airplane (
+CREATE TABLE airplanes (
     airplane_id SERIAL PRIMARY KEY,
     serial_number VARCHAR(15) NOT NULL,
     manufacturer VARCHAR(50) NOT NULL,
@@ -40,18 +44,18 @@ CREATE TABLE pilot_ratings (
     rating_id INT NOT NULL,
     PRIMARY KEY (employee_id, rating_id),
     FOREIGN KEY (employee_id) REFERENCES staff(employee_id),
-    FOREIGN KEY (rating_id) REFERENCES ratings(rating_id)
+    FOREIGN KEY (rating_id) REFERENCES aircraft_ratings(rating_id)
 );
 
 -- Flights
 CREATE TABLE flights (
     flight_id SERIAL PRIMARY KEY,
     flight_number VARCHAR(10) NOT NULL,
-    departure_date DATETIME NOT NULL,
-    arrival_date DATETIME NOT NULL,
+    departure_date TIMESTAMP NOT NULL,
+    arrival_date TIMESTAMP NOT NULL,
     airplane_id INT NOT NULL,
     CONSTRAINT arrival_after_departure CHECK (arrival_date > departure_date),
-    FOREIGN KEY (airplane_id) REFERENCES airplane(airplane_id)
+    FOREIGN KEY (airplane_id) REFERENCES airplanes(airplane_id)
 );
 
 CREATE TABLE flight_passengers (
