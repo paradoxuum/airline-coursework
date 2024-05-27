@@ -45,17 +45,17 @@ export function PassengerTable() {
 	const columns = useMemo<ColumnDef<Passenger>[]>(
 		() => [
 			{
-				accessorKey: "id",
+				accessorKey: "passenger_id",
 				header: ({ column }) => <ColumnHeader column={column} title="ID" />,
 			},
 			{
-				accessorKey: "firstName",
+				accessorKey: "first_name",
 				header: ({ column }) => (
 					<ColumnHeader column={column} title="First Name" />
 				),
 			},
 			{
-				accessorKey: "lastName",
+				accessorKey: "last_name",
 				header: ({ column }) => (
 					<ColumnHeader column={column} title="Last Name" />
 				),
