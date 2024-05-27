@@ -19,16 +19,13 @@ export const airplaneActions = {
 		accept: "json",
 		input: airplaneSchema.omit({ airplane_id: true }),
 		handler: async (input) => {
-			const data = await db.result(
+			const data = await db.one<Airplane>(
 				`INSERT INTO airplanes($1:name)
 				VALUES($1:csv)
 				RETURNING *`,
 				[input],
 			);
-
-			const airplane = plainToInstance(AirplaneData, data);
-			console.log(airplane.getAirplaneId(), airplane);
-			return airplane.getAirplaneId();
+			return plainToInstance(AirplaneData, data).getAirplaneId();
 		},
 	}),
 

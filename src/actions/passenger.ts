@@ -1,17 +1,17 @@
 import { PassengerData } from "@/actions/db/passenger";
 import { db } from "@/db";
-import { passengerSchema } from "@/schema";
+import { passengerSchema, type Passenger } from "@/schema";
 import { defineAction } from "astro:actions";
-import { plainToInstance } from "class-transformer";
+import { instanceToPlain, plainToInstance } from "class-transformer";
 import type { IResult } from "pg-promise/typescript/pg-subset";
 
 export const passengerActions = {
 	getAll: defineAction({
 		handler: async () => {
-			const users = await db.any("SELECT * FROM passengers");
-
-			console.log(users);
-			return [];
+			const passengers = await db.any("SELECT * FROM passengers");
+			return instanceToPlain(
+				plainToInstance(PassengerData, passengers),
+			) as Passenger[];
 		},
 	}),
 
@@ -19,7 +19,7 @@ export const passengerActions = {
 		accept: "json",
 		input: passengerSchema.omit({ passenger_id: true }),
 		handler: async (input) => {
-			const data = await db.result(
+			const data = await db.one<Passenger>(
 				`INSERT INTO passengers($1:name)
 				VALUES($1:csv)
 				RETURNING *`,
