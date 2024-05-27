@@ -8,3 +8,4 @@ const PASS = import.meta.env.DB_PASSWORD;
 
 const pgp = pgPromise({});
 export const db = pgp(`postgres://${USER}:${PASS}@${HOST}:${PORT}/${NAME}`);
+export type Database = typeof db;

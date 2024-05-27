@@ -39,7 +39,7 @@ export const flightSchema = z.object({
 });
 
 export type Passenger = z.infer<typeof passengerSchema>;
-export type Staff = z.infer<typeof staffSchema>;
+export type Employee = z.infer<typeof staffSchema>;
 export type Airplane = z.infer<typeof airplaneSchema>;
 export type Airport = z.infer<typeof airportSchema>;
 export type Flight = z.infer<typeof flightSchema>;

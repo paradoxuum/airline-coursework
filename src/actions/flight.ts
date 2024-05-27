@@ -1,15 +1,24 @@
 import { FlightData } from "@/actions/db/flight";
 import { db } from "@/db";
 import { flightSchema, type Flight } from "@/schema";
-import { defineAction } from "astro:actions";
-import { instanceToPlain, plainToInstance } from "class-transformer";
-import type { IResult } from "pg-promise/typescript/pg-subset";
+import { ActionError, defineAction } from "astro:actions";
+import { instanceToPlain } from "class-transformer";
+
+async function getFromId(id: number) {
+	const data = await FlightData.getFromId(db, id);
+	if (data === undefined) {
+		throw new ActionError({
+			code: "NOT_FOUND",
+			message: `Flight with id ${id} not found`,
+		});
+	}
+	return data;
+}
 
 export const flightActions = {
 	getAll: defineAction({
 		handler: async () => {
-			const flights = await db.any("SELECT * FROM flights");
-			return instanceToPlain(plainToInstance(FlightData, flights)) as Flight[];
+			return instanceToPlain(await FlightData.getAll(db)) as Flight[];
 		},
 	}),
 
@@ -17,13 +26,7 @@ export const flightActions = {
 		accept: "json",
 		input: flightSchema.omit({ flight_id: true }),
 		handler: async (input) => {
-			const data = await db.one<Flight>(
-				`INSERT INTO flights($1:name)
-				VALUES($1:csv)
-				RETURNING *`,
-				[input],
-			);
-			return plainToInstance(FlightData, data).getFlightId();
+			return FlightData.createHolder(db, input).insert();
 		},
 	}),
 
@@ -31,12 +34,9 @@ export const flightActions = {
 		accept: "json",
 		input: flightSchema.partial().required({ flight_id: true }),
 		handler: async (input) => {
-			const flightId = input.flight_id;
-			db.result(
-				"UPDATE flights SET $1:name WHERE flight_id = $2",
-				[input, input.flight_id],
-				(r: IResult) => r.rowCount,
-			);
+			const data = await getFromId(input.flight_id);
+			data.setDatabase(db);
+			await data.update(input);
 		},
 	}),
 
@@ -44,11 +44,9 @@ export const flightActions = {
 		accept: "json",
 		input: flightSchema.pick({ flight_id: true }),
 		handler: async (input) => {
-			db.result(
-				"DELETE FROM flights WHERE flight_id = $1",
-				[input.flight_id],
-				(r: IResult) => r.rowCount,
-			);
+			const data = await getFromId(input.flight_id);
+			data.setDatabase(db);
+			await data.delete();
 		},
 	}),
 };

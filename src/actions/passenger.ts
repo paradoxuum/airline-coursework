@@ -1,17 +1,24 @@
 import { PassengerData } from "@/actions/db/passenger";
 import { db } from "@/db";
 import { passengerSchema, type Passenger } from "@/schema";
-import { defineAction } from "astro:actions";
-import { instanceToPlain, plainToInstance } from "class-transformer";
-import type { IResult } from "pg-promise/typescript/pg-subset";
+import { ActionError, defineAction } from "astro:actions";
+import { instanceToPlain } from "class-transformer";
+
+async function getFromId(id: number) {
+	const data = await PassengerData.getFromId(db, id);
+	if (data === undefined) {
+		throw new ActionError({
+			code: "NOT_FOUND",
+			message: `Passenger with id ${id} not found`,
+		});
+	}
+	return data;
+}
 
 export const passengerActions = {
 	getAll: defineAction({
 		handler: async () => {
-			const passengers = await db.any("SELECT * FROM passengers");
-			return instanceToPlain(
-				plainToInstance(PassengerData, passengers),
-			) as Passenger[];
+			return instanceToPlain(await PassengerData.getAll(db)) as Passenger[];
 		},
 	}),
 
@@ -19,13 +26,7 @@ export const passengerActions = {
 		accept: "json",
 		input: passengerSchema.omit({ passenger_id: true }),
 		handler: async (input) => {
-			const data = await db.one<Passenger>(
-				`INSERT INTO passengers($1:name)
-				VALUES($1:csv)
-				RETURNING *`,
-				[input],
-			);
-			return plainToInstance(PassengerData, data).getPassengerId();
+			return PassengerData.createHolder(db, input).insert();
 		},
 	}),
 
@@ -33,11 +34,9 @@ export const passengerActions = {
 		accept: "json",
 		input: passengerSchema.partial().required({ passenger_id: true }),
 		handler: async (input) => {
-			db.result(
-				"UPDATE passengers SET $1:name WHERE passenger_id = $2",
-				[input, input.passenger_id],
-				(r: IResult) => r.rowCount,
-			);
+			const data = await getFromId(input.passenger_id);
+			data.setDatabase(db);
+			await data.update(input);
 		},
 	}),
 
@@ -45,11 +44,9 @@ export const passengerActions = {
 		accept: "json",
 		input: passengerSchema.pick({ passenger_id: true }),
 		handler: async (input) => {
-			db.result(
-				"DELETE FROM passengers WHERE passenger_id = $1",
-				[input.passenger_id],
-				(r: IResult) => r.rowCount,
-			);
+			const data = await getFromId(input.passenger_id);
+			data.setDatabase(db);
+			await data.delete();
 		},
 	}),
 };
