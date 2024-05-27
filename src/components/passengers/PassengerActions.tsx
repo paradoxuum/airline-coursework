@@ -34,7 +34,7 @@ export function PassengerActions({
 						toast.success("Copied ID to clipboard");
 					}}
 				>
-					Copy flight ID
+					Copy passenger ID
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onClick={() => onDialogChange("update")}>

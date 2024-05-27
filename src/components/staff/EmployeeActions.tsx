@@ -7,15 +7,15 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
-import type { Airplane } from "@/schema";
+import type { Employee } from "@/schema";
 import { Ellipsis } from "lucide-react";
 import { toast } from "sonner";
 
-export function AirplaneActions({
-	airplane,
+export function EmployeeActions({
+	employee,
 	onDialogChange,
 }: {
-	airplane: Airplane;
+	employee: Employee;
 	onDialogChange: (dialog?: "delete" | "update") => void;
 }) {
 	return (
@@ -30,11 +30,11 @@ export function AirplaneActions({
 				<DropdownMenuLabel>Actions</DropdownMenuLabel>
 				<DropdownMenuItem
 					onClick={() => {
-						navigator.clipboard.writeText(airplane.airplane_id.toString());
+						navigator.clipboard.writeText(employee.employee_id.toString());
 						toast.success("Copied ID to clipboard");
 					}}
 				>
-					Copy airplane ID
+					Copy employee ID
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onClick={() => onDialogChange("update")}>
