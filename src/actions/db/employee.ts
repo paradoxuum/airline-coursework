@@ -37,6 +37,14 @@ export class EmployeeData
 		);
 	}
 
+	/**
+	 * Creates a EmployeeData instance by querying an employee from
+	 * the database with the given id.
+	 *
+	 * @param db The database to use
+	 * @param id The id of the employee to get
+	 * @returns The instance of the employee
+	 */
 	static async getFromId(db: Database, id: number) {
 		const result = db.oneOrNone<Employee | undefined>(
 			"SELECT * FROM staff WHERE employee_id = $1",

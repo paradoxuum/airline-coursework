@@ -20,7 +20,20 @@ export abstract class DatabaseHolder {
 }
 
 export interface DatabaseInteractions<T, I> {
+	/**
+	 * Inserts the entity into the database.
+	 * @returns The id of the inserted entity
+	 */
 	insert(data: T): Promise<number>;
+
+	/**
+	 * Updates the entity with the given data.
+	 * @param data The data to update the entity with
+	 */
 	update(data: Partial<I>): Promise<void>;
+
+	/**
+	 * Deletes the entity from the database.
+	 */
 	delete(): Promise<void>;
 }

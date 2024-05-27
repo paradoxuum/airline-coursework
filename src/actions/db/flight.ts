@@ -37,6 +37,13 @@ export class FlightData
 		this.arrival_date = new Date(arrival_date);
 	}
 
+	/**
+	 * Creates a new instance of FlightData with the given data. This should primarily be used
+	 * when creating a new flight.
+	 * @param database The database to use
+	 * @param data The data to use
+	 * @returns The new instance
+	 */
 	static createHolder(database: Database, data: Omit<Flight, "flight_id">) {
 		return new FlightData(
 			database,
@@ -48,6 +55,14 @@ export class FlightData
 		);
 	}
 
+	/**
+	 * Creates a FlightData instance by querying a flight from
+	 * the database with the given id.
+	 *
+	 * @param db The database to use
+	 * @param id The id of the flight to get
+	 * @returns The instance of the flight
+	 */
 	static async getFromId(db: Database, id: number) {
 		const result = db.oneOrNone<Flight | undefined>(
 			"SELECT * FROM flights WHERE flight_id = $1",
@@ -60,6 +75,11 @@ export class FlightData
 		return instance;
 	}
 
+	/**
+	 * Returns all flights in the database.
+	 * @param db The database to use
+	 * @returns All flights in the database
+	 */
 	static async getAll(db: Database) {
 		const result = await db.any<Flight>("SELECT * FROM flights");
 		return Promise.all(
@@ -72,6 +92,8 @@ export class FlightData
 	}
 
 	private static async populateFields(db: Database, flight: FlightData) {
+		// Populate passengers and crew fields for the flight
+		// by querying bridge tables
 		flight.passengers = await PassengerData.getAllForFlight(
 			db,
 			flight.getFlightId(),
@@ -129,13 +151,45 @@ export class FlightData
 		);
 	}
 
+	/**
+	 * Adds a passenger to the flight.
+	 * @param passenger The passenger to add
+	 */
 	async addPassenger(passenger: PassengerData) {
+		if (
+			this.passengers.some(
+				(p) => p.getPassengerId() === passenger.getPassengerId(),
+			)
+		) {
+			return;
+		}
+
 		await this.getDatabase().result(
 			`INSERT INTO flight_passengers(flight_id, passenger_id)
 			VALUES($1, $2)`,
 			[this.flight_id, passenger.getPassengerId()],
 		);
 		this.passengers.push(passenger);
+	}
+
+	/**
+	 * Adds a stop to the flight.
+	 * @param airport_code The airport code of the stop to add
+	 */
+	async addStop(aiportId: number) {
+		const airportCode = await this.getDatabase().one<string>(
+			"SELECT airport_code FROM airports WHERE airport_id = $1",
+			[aiportId],
+		);
+
+		if (this.stops.includes(airportCode)) return;
+
+		await this.getDatabase().result(
+			`INSERT INTO flight_stops(flight_id, airport_id)
+			VALUES($1, $2)`,
+			[this.flight_id, aiportId],
+		);
+		this.stops.push(airportCode);
 	}
 
 	getFlightId() {

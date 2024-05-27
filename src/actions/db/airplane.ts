@@ -20,6 +20,13 @@ export class AirplaneData
 		super(database);
 	}
 
+	/**
+	 * Creates a new instance of FlightData with the given data. This should primarily be used
+	 * when creating a new flight.
+	 * @param database The database to use
+	 * @param data The data to use
+	 * @returns The new instance
+	 */
 	static createHolder(db: Database, data: Omit<Airplane, "airplane_id">) {
 		return new AirplaneData(
 			db,
@@ -30,6 +37,14 @@ export class AirplaneData
 		);
 	}
 
+	/**
+	 * Creates a AirplaneData instance by querying an airplane from
+	 * the database with the given id.
+	 *
+	 * @param db The database to use
+	 * @param id The id of the airplane to get
+	 * @returns The instance of the airplane
+	 */
 	static async getFromId(db: Database, id: number) {
 		const result = db.oneOrNone<Airplane | undefined>(
 			"SELECT * FROM airplanes WHERE airplane_id = $1",

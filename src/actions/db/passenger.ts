@@ -20,6 +20,14 @@ export class PassengerData
 		super(database, first_name, last_name, address, phone);
 	}
 
+	/**
+	 * Creates a PassengerData instance by querying a passenger from
+	 * the database with the given id.
+	 *
+	 * @param db The database to use
+	 * @param id The id of the passenger to get
+	 * @returns The instance of the passenger
+	 */
 	static createHolder(
 		database: Database,
 		data: Omit<Passenger, "passenger_id">,
