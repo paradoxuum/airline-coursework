@@ -49,6 +49,12 @@ export function FlightTable() {
 				header: ({ column }) => <ColumnHeader column={column} title="ID" />,
 			},
 			{
+				accessorKey: "flight_number",
+				header: ({ column }) => (
+					<ColumnHeader column={column} title="Flight Number" />
+				),
+			},
+			{
 				accessorKey: "departureDate",
 				header: ({ column }) => (
 					<ColumnHeader column={column} title="Departure Date" />
