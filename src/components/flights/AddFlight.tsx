@@ -8,32 +8,26 @@ import {
 } from "@/components/ui/Sheet";
 import type { Flight } from "@/schema";
 
-export function FlightUpdate({
-	flight,
+export function AddFlight({
 	onSubmit,
 	open,
 	onOpenChange,
 }: {
-	flight?: Flight;
-	onSubmit?: (data: Omit<Flight, "flight_id">) => void;
-	open?: boolean;
-	onOpenChange?: (open: boolean) => void;
+	onSubmit: (data: Omit<Flight, "flight_id">) => void;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
 }) {
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent>
 				<SheetHeader>
-					<SheetTitle>Update Flight {flight?.flight_id}</SheetTitle>
+					<SheetTitle>Add Flight</SheetTitle>
 					<SheetDescription>
-						Update flight details here. Click save when you're done.
+						Enter flight details here. Click save when you're done.
 					</SheetDescription>
 				</SheetHeader>
 
-				<FlightForm
-					defaultValues={flight}
-					className="mt-4"
-					onSubmit={(data) => onSubmit?.(data)}
-				/>
+				<FlightForm className="mt-4" onSubmit={onSubmit} />
 			</SheetContent>
 		</Sheet>
 	);

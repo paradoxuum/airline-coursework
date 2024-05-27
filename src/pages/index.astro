@@ -1,8 +1,38 @@
 ---
-import FlightCard from "@/components/FlightCard.astro";
+import { AirplaneTable } from "@/components/airplane";
+import { FlightTable } from "@/components/flights";
+import { PassengerTable } from "@/components/passengers";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Layout from "@/layouts/Layout.astro";
 ---
 
 <Layout title="Airline | Dashboard">
-  <FlightCard />
+  <div class="flex flex-col gap-4">
+    <Card className="mx-8">
+      <CardHeader>
+        <CardTitle>Flights</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <FlightTable client:only="react" />
+      </CardContent>
+    </Card>
+
+    <Card className="mx-8">
+      <CardHeader>
+        <CardTitle>Airplanes</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <AirplaneTable client:only="react" />
+      </CardContent>
+    </Card>
+
+    <Card className="mx-8">
+      <CardHeader>
+        <CardTitle>Passengers</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <PassengerTable client:only="react" />
+      </CardContent>
+    </Card>
+  </div>
 </Layout>

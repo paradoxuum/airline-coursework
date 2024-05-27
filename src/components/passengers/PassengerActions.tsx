@@ -7,15 +7,15 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
-import type { Flight } from "@/schema";
+import type { Passenger } from "@/schema";
 import { Ellipsis } from "lucide-react";
 import { toast } from "sonner";
 
-export function FlightActions({
-	flight,
+export function PassengerActions({
+	passenger,
 	onDialogChange,
 }: {
-	flight: Flight;
+	passenger: Passenger;
 	onDialogChange: (dialog?: "delete" | "update") => void;
 }) {
 	return (
@@ -30,7 +30,7 @@ export function FlightActions({
 				<DropdownMenuLabel>Actions</DropdownMenuLabel>
 				<DropdownMenuItem
 					onClick={() => {
-						navigator.clipboard.writeText(flight.flight_id.toString());
+						navigator.clipboard.writeText(passenger.passenger_id.toString());
 						toast.success("Copied ID to clipboard");
 					}}
 				>
