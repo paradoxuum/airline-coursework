@@ -2,12 +2,17 @@ import type { DatabaseInteractions } from "@/actions/db/database";
 import { PersonData } from "@/actions/db/person";
 import type { Database } from "@/db";
 import type { Employee } from "@/schema";
-import { plainToInstance } from "class-transformer";
+import { Exclude, plainToInstance } from "class-transformer";
 
 export class EmployeeData
 	extends PersonData
 	implements DatabaseInteractions<EmployeeData, Omit<Employee, "employee_id">>
 {
+	@Exclude({
+		toClassOnly: true,
+	})
+	private aircraft_ratings: string[] = [];
+
 	constructor(
 		database: Database,
 		private readonly employee_id: number,
@@ -39,12 +44,57 @@ export class EmployeeData
 		);
 		if (result === undefined) return;
 
-		return plainToInstance(EmployeeData, result);
+		const instance = plainToInstance(EmployeeData, result);
+		instance.aircraft_ratings = await EmployeeData.getAircraftRatings(
+			db,
+			instance.employee_id,
+		);
+		return instance;
 	}
 
 	static async getAll(db: Database) {
 		const result = await db.any<Employee>("SELECT * FROM staff");
-		return result.map((data) => plainToInstance(EmployeeData, data));
+		return await Promise.all(
+			result.map(async (data) => {
+				const instance = plainToInstance(EmployeeData, data);
+				instance.aircraft_ratings = await EmployeeData.getAircraftRatings(
+					db,
+					instance.employee_id,
+				);
+				return instance;
+			}),
+		);
+	}
+
+	static async getAllForFlight(db: Database, flight_id: number) {
+		const result = await db.any<Employee>(
+			`SELECT * FROM staff
+			JOIN flight_crew
+				ON staff.employee_id = flight_crew.employee_id
+			WHERE flight_crew.flight_id = $1`,
+			[flight_id],
+		);
+		return await Promise.all(
+			result.map(async (data) => {
+				const instance = plainToInstance(EmployeeData, data);
+				instance.aircraft_ratings = await EmployeeData.getAircraftRatings(
+					db,
+					instance.employee_id,
+				);
+				return instance;
+			}),
+		);
+	}
+
+	static async getAircraftRatings(db: Database, employeeId: number) {
+		return await db.any<string>(
+			`SELECT R.aircraft
+			FROM pilot_ratings PR
+			JOIN aircraft_ratings R
+				ON PR.rating_id = R.rating_id
+			WHERE PR.employee_id = $1`,
+			[employeeId],
+		);
 	}
 
 	async insert() {
@@ -81,6 +131,22 @@ export class EmployeeData
 			"DELETE FROM staff WHERE employee_id = $1",
 			[this.employee_id],
 		);
+	}
+
+	async addAircraftRating(ratingId: number) {
+		const aircraft = await this.getDatabase().oneOrNone<string>(
+			"SELECT aircraft FROM aircraft_ratings WHERE rating_id = $1",
+			[ratingId],
+		);
+		if (aircraft === null) {
+			throw new Error("Rating not found");
+		}
+
+		await this.getDatabase().result(
+			"INSERT INTO pilot_ratings(employee_id, rating_id) VALUES($1, $2)",
+			[this.employee_id, ratingId],
+		);
+		this.aircraft_ratings.push(aircraft);
 	}
 
 	getEmployeeId() {

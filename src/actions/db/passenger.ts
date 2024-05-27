@@ -49,6 +49,17 @@ export class PassengerData
 		return result.map((data) => plainToInstance(PassengerData, data));
 	}
 
+	static async getAllForFlight(db: Database, flight_id: number) {
+		const result = await db.any<Passenger>(
+			`SELECT * FROM passengers
+			JOIN flight_passengers
+				ON passengers.passenger_id = flight_passengers.passenger_id
+			WHERE flight_passengers.flight_id = $1`,
+			[flight_id],
+		);
+		return result.map((data) => plainToInstance(PassengerData, data));
+	}
+
 	getPassengerId() {
 		return this.passenger_id;
 	}

@@ -2,9 +2,11 @@ import {
 	DatabaseHolder,
 	type DatabaseInteractions,
 } from "@/actions/db/database";
+import { EmployeeData } from "@/actions/db/employee";
+import { PassengerData } from "@/actions/db/passenger";
 import type { Database } from "@/db";
 import type { Flight } from "@/schema";
-import { plainToInstance } from "class-transformer";
+import { Exclude, plainToInstance } from "class-transformer";
 
 export class FlightData
 	extends DatabaseHolder
@@ -12,6 +14,15 @@ export class FlightData
 {
 	private departure_date: Date;
 	private arrival_date: Date;
+
+	@Exclude({ toClassOnly: true })
+	private passengers: PassengerData[] = [];
+
+	@Exclude({ toClassOnly: true })
+	private crew: EmployeeData[] = [];
+
+	@Exclude({ toClassOnly: true })
+	private stops: string[] = [];
 
 	constructor(
 		database: Database,
@@ -44,12 +55,38 @@ export class FlightData
 		);
 		if (result === undefined) return;
 
-		return plainToInstance(FlightData, result);
+		const instance = plainToInstance(FlightData, result);
+		await FlightData.populateFields(db, instance);
+		return instance;
 	}
 
 	static async getAll(db: Database) {
 		const result = await db.any<Flight>("SELECT * FROM flights");
-		return result.map((data) => plainToInstance(FlightData, data));
+		return Promise.all(
+			result.map(async (data) => {
+				const instance = plainToInstance(FlightData, data);
+				await FlightData.populateFields(db, instance);
+				return instance;
+			}),
+		);
+	}
+
+	private static async populateFields(db: Database, flight: FlightData) {
+		flight.passengers = await PassengerData.getAllForFlight(
+			db,
+			flight.getFlightId(),
+		);
+		flight.crew = await EmployeeData.getAllForFlight(db, flight.getFlightId());
+
+		const stops = await db.any<string>(
+			`SELECT A.airport_code
+			FROM flight_stops FS
+			JOIN airports A
+				ON FS.airport_id = A.airport_id
+			WHERE FS.flight_id = $1`,
+			[flight.getFlightId()],
+		);
+		flight.stops = stops;
 	}
 
 	async insert() {
@@ -92,6 +129,15 @@ export class FlightData
 		);
 	}
 
+	async addPassenger(passenger: PassengerData) {
+		await this.getDatabase().result(
+			`INSERT INTO flight_passengers(flight_id, passenger_id)
+			VALUES($1, $2)`,
+			[this.flight_id, passenger.getPassengerId()],
+		);
+		this.passengers.push(passenger);
+	}
+
 	getFlightId() {
 		return this.flight_id;
 	}
@@ -110,5 +156,17 @@ export class FlightData
 
 	getAirplaneId() {
 		return this.airplane_id;
+	}
+
+	getPassengers() {
+		return this.passengers;
+	}
+
+	getCrew() {
+		return this.crew;
+	}
+
+	getStops() {
+		return this.stops;
 	}
 }
