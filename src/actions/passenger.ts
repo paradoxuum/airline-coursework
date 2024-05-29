@@ -1,4 +1,5 @@
 import { PassengerData } from "@/actions/db/passenger";
+import { checkError } from "@/actions/util";
 import { db } from "@/db";
 import { passengerSchema, type Passenger } from "@/schema";
 import { ActionError, defineAction } from "astro:actions";
@@ -17,36 +18,49 @@ async function getFromId(id: number) {
 
 export const passengerActions = {
 	getAll: defineAction({
-		handler: async () => {
-			return instanceToPlain(await PassengerData.getAll(db)) as Passenger[];
-		},
+		handler: () =>
+			checkError(async () => {
+				return instanceToPlain(await PassengerData.getAll(db)) as Passenger[];
+			}),
 	}),
 
 	create: defineAction({
 		accept: "json",
 		input: passengerSchema.omit({ passenger_id: true }),
-		handler: async (input) => {
-			return PassengerData.createHolder(db, input).insert();
-		},
+		handler: (input) =>
+			checkError(async () => {
+				const data = PassengerData.createHolder(db, input);
+				await data.insert();
+				return instanceToPlain(data) as Passenger;
+			}),
 	}),
 
 	update: defineAction({
 		accept: "json",
 		input: passengerSchema.partial().required({ passenger_id: true }),
-		handler: async (input) => {
-			const data = await getFromId(input.passenger_id);
-			data.setDatabase(db);
-			await data.update(input);
-		},
+		handler: (input) =>
+			checkError(async () => {
+				const data = await getFromId(input.passenger_id);
+				data.setDatabase(db);
+				await data.update({
+					first_name: input.first_name,
+					last_name: input.last_name,
+					address: input.address,
+					phone: input.phone,
+				});
+				return instanceToPlain(data) as Passenger;
+			}),
 	}),
 
 	delete: defineAction({
 		accept: "json",
 		input: passengerSchema.pick({ passenger_id: true }),
-		handler: async (input) => {
-			const data = await getFromId(input.passenger_id);
-			data.setDatabase(db);
-			await data.delete();
-		},
+		handler: (input) =>
+			checkError(async () => {
+				const data = await getFromId(input.passenger_id);
+				data.setDatabase(db);
+				await data.delete();
+				return instanceToPlain(data) as Passenger;
+			}),
 	}),
 };

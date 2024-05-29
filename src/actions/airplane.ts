@@ -1,4 +1,5 @@
 import { AirplaneData } from "@/actions/db/airplane";
+import { checkError } from "@/actions/util";
 import { db } from "@/db";
 import { airplaneSchema, type Airplane } from "@/schema";
 import { ActionError, defineAction } from "astro:actions";
@@ -17,36 +18,48 @@ async function getFromId(id: number) {
 
 export const airplaneActions = {
 	getAll: defineAction({
-		handler: async () => {
-			return instanceToPlain(await AirplaneData.getAll(db)) as Airplane[];
-		},
+		handler: () =>
+			checkError(async () => {
+				return instanceToPlain(await AirplaneData.getAll(db)) as Airplane[];
+			}),
 	}),
 
 	create: defineAction({
 		accept: "json",
 		input: airplaneSchema.omit({ airplane_id: true }),
-		handler: async (input) => {
-			return AirplaneData.createHolder(db, input).insert();
-		},
+		handler: (input) =>
+			checkError(async () => {
+				const data = AirplaneData.createHolder(db, input);
+				await data.insert();
+				return instanceToPlain(data) as Airplane;
+			}),
 	}),
 
 	update: defineAction({
 		accept: "json",
 		input: airplaneSchema.partial().required({ airplane_id: true }),
-		handler: async (input) => {
-			const data = await getFromId(input.airplane_id);
-			data.setDatabase(db);
-			await data.update(input);
-		},
+		handler: (input) =>
+			checkError(async () => {
+				const data = await getFromId(input.airplane_id);
+				data.setDatabase(db);
+				await data.update({
+					manufacturer: input.manufacturer,
+					model: input.model,
+					serial_number: input.serial_number,
+				});
+				return instanceToPlain(data) as Airplane;
+			}),
 	}),
 
 	delete: defineAction({
 		accept: "json",
 		input: airplaneSchema.pick({ airplane_id: true }),
-		handler: async (input) => {
-			const data = await getFromId(input.airplane_id);
-			data.setDatabase(db);
-			await data.delete();
-		},
+		handler: (input) =>
+			checkError(async () => {
+				const data = await getFromId(input.airplane_id);
+				data.setDatabase(db);
+				await data.delete();
+				return instanceToPlain(data) as Airplane;
+			}),
 	}),
 };
