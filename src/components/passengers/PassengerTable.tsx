@@ -1,9 +1,9 @@
+import { ActionsDropdown } from "@/components/ActionsDropdown";
 import { ColumnHeader } from "@/components/ColumnHeader";
 import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { AddPassenger } from "@/components/passengers/AddPassenger";
-import { PassengerActions } from "@/components/passengers/PassengerActions";
-import { PassengerUpdate } from "@/components/passengers/PassengerUpdate";
+import { FormSheet } from "@/components/FormSheet";
+import { PassengerForm } from "@/components/passengers/PassengerForm";
 import { Button } from "@/components/ui/Button";
 import { useApiMutation } from "@/lib/useApiMutation";
 import type { Passenger } from "@/schema";
@@ -22,7 +22,7 @@ import { useMemo, useState } from "react";
 
 export function PassengerTable() {
 	const [sorting, setSorting] = useState<SortingState>([]);
-	const [openDialog, setOpenDialog] = useState<
+	const [currentAction, setCurrentAction] = useState<
 		{ type: "create" | "delete" | "update"; passenger?: Passenger } | undefined
 	>();
 
@@ -78,17 +78,18 @@ export function PassengerTable() {
 				cell: ({ row }) => {
 					const passenger = row.original;
 					return (
-						<PassengerActions
-							passenger={passenger}
-							onDialogChange={(dialog) => {
-								setOpenDialog(
-									dialog !== undefined
-										? {
-												type: dialog,
-												passenger,
-											}
-										: undefined,
-								);
+						<ActionsDropdown
+							id={passenger.passenger_id.toString()}
+							onSelect={(action) => {
+								if (action !== "update" && action !== "delete") {
+									setCurrentAction(undefined);
+									return;
+								}
+
+								setCurrentAction({
+									type: action,
+									passenger,
+								});
 							}}
 						/>
 					);
@@ -111,46 +112,57 @@ export function PassengerTable() {
 
 	return (
 		<>
-			<AddPassenger
-				open={openDialog?.type === "create"}
+			<FormSheet
+				name="passenger"
+				open={currentAction?.type === "create"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (open) return;
+					setCurrentAction(undefined);
 				}}
-				onSubmit={(data) => {
-					if (mutations.create.isPending) return;
-					mutations.create.mutate(data);
-					setOpenDialog(undefined);
-				}}
-			/>
+			>
+				<PassengerForm
+					onSubmit={(data) => {
+						if (mutations.create.isPending) return;
+						mutations.create.mutate(data);
+						setCurrentAction(undefined);
+					}}
+				/>
+			</FormSheet>
 
-			<PassengerUpdate
-				passenger={openDialog?.passenger}
-				open={openDialog?.type === "update"}
+			<FormSheet
+				update
+				name="passenger"
+				open={currentAction?.type === "update"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (open) return;
+					setCurrentAction(undefined);
 				}}
-				onSubmit={(data) => {
-					const id = openDialog?.passenger?.passenger_id;
-					if (mutations.update.isPending || id === undefined) return;
-					mutations.update.mutate({
-						...data,
-						passenger_id: id,
-					});
-					setOpenDialog(undefined);
-				}}
-			/>
+			>
+				<PassengerForm
+					defaultValues={currentAction?.passenger}
+					onSubmit={(data) => {
+						const id = currentAction?.passenger?.passenger_id;
+						if (mutations.update.isPending || id === undefined) return;
+						mutations.update.mutate({
+							...data,
+							passenger_id: id,
+						});
+						setCurrentAction(undefined);
+					}}
+				/>
+			</FormSheet>
 
 			<DeleteDialog
 				loading={mutations.delete.isPending}
-				open={openDialog?.type === "delete"}
+				open={currentAction?.type === "delete"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (!open) setCurrentAction(undefined);
 				}}
 				onConfirm={() => {
-					const id = openDialog?.passenger?.passenger_id;
+					const id = currentAction?.passenger?.passenger_id;
 					if (mutations.delete.isPending || id === undefined) return;
 					mutations.delete.mutate(id);
-					setOpenDialog(undefined);
+					setCurrentAction(undefined);
 				}}
 			/>
 
@@ -158,7 +170,7 @@ export function PassengerTable() {
 				className="mb-4"
 				variant="outline"
 				onClick={() =>
-					setOpenDialog({
+					setCurrentAction({
 						type: "create",
 					})
 				}

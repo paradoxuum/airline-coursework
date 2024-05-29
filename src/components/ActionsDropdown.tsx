@@ -7,16 +7,19 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
-import type { Airplane } from "@/schema";
 import { Ellipsis } from "lucide-react";
 import { toast } from "sonner";
 
-export function AirplaneActions({
-	airplane,
-	onDialogChange,
+export type Action = "delete" | "update";
+
+export function ActionsDropdown<T>({
+	id,
+	children,
+	onSelect,
 }: {
-	airplane: Airplane;
-	onDialogChange: (dialog?: "delete" | "update") => void;
+	id?: string;
+	children?: React.ReactNode;
+	onSelect: (action?: string) => void;
 }) {
 	return (
 		<DropdownMenu>
@@ -30,22 +33,25 @@ export function AirplaneActions({
 				<DropdownMenuLabel>Actions</DropdownMenuLabel>
 				<DropdownMenuItem
 					onClick={() => {
-						navigator.clipboard.writeText(airplane.airplane_id.toString());
+						if (id === undefined) return;
+						navigator.clipboard.writeText(id);
 						toast.success("Copied ID to clipboard");
 					}}
 				>
-					Copy airplane ID
+					Copy ID
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem onClick={() => onDialogChange("update")}>
+				<DropdownMenuItem onClick={() => onSelect("update")}>
 					Update
 				</DropdownMenuItem>
 				<DropdownMenuItem
 					className="text-red-500"
-					onClick={() => onDialogChange("delete")}
+					onClick={() => onSelect("delete")}
 				>
 					Delete
 				</DropdownMenuItem>
+
+				{children}
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

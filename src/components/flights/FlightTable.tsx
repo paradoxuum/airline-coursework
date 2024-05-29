@@ -1,9 +1,9 @@
+import { ActionsDropdown } from "@/components/ActionsDropdown";
 import { ColumnHeader } from "@/components/ColumnHeader";
 import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { AddFlight } from "@/components/flights/AddFlight";
-import { FlightActions } from "@/components/flights/FlightActions";
-import { FlightUpdate } from "@/components/flights/FlightUpdate";
+import { FormSheet } from "@/components/FormSheet";
+import { FlightForm } from "@/components/flights/FlightForm";
 import { Button } from "@/components/ui/Button";
 import { useApiMutation } from "@/lib/useApiMutation";
 import type { Flight } from "@/schema";
@@ -22,7 +22,7 @@ import { useMemo, useState } from "react";
 
 export function FlightTable() {
 	const [sorting, setSorting] = useState<SortingState>([]);
-	const [openDialog, setOpenDialog] = useState<
+	const [currentAction, setCurrentAction] = useState<
 		{ type: "create" | "delete" | "update"; flight?: Flight } | undefined
 	>();
 
@@ -86,18 +86,19 @@ export function FlightTable() {
 				cell: ({ row }) => {
 					const flight = row.original;
 					return (
-						<FlightActions
-							flight={flight}
-							onDialogChange={(dialog) =>
-								setOpenDialog(
-									dialog !== undefined
-										? {
-												type: dialog,
-												flight,
-											}
-										: undefined,
-								)
-							}
+						<ActionsDropdown
+							id={flight.flight_id.toString()}
+							onSelect={(action) => {
+								if (action !== "update" && action !== "delete") {
+									setCurrentAction(undefined);
+									return;
+								}
+
+								setCurrentAction({
+									type: action,
+									flight,
+								});
+							}}
 						/>
 					);
 				},
@@ -119,53 +120,64 @@ export function FlightTable() {
 
 	return (
 		<>
-			<AddFlight
-				open={openDialog?.type === "create"}
+			<FormSheet
+				name="flight"
+				open={currentAction?.type === "create"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (open) return;
+					setCurrentAction(undefined);
 				}}
-				onSubmit={(data) => {
-					if (mutations.create.isPending) return;
-					mutations.create.mutate(data);
-					setOpenDialog(undefined);
-				}}
-			/>
+			>
+				<FlightForm
+					onSubmit={(data) => {
+						if (mutations.create.isPending) return;
+						mutations.create.mutate(data);
+						setCurrentAction(undefined);
+					}}
+				/>
+			</FormSheet>
 
-			<FlightUpdate
-				flight={openDialog?.flight}
-				onSubmit={(data) => {
-					const id = openDialog?.flight?.flight_id;
-					if (mutations.update.isPending || id === undefined) return;
-					mutations.update.mutate({
-						...data,
-						flight_id: id,
-					});
-					setOpenDialog(undefined);
-				}}
-				open={openDialog?.type === "update"}
+			<FormSheet
+				update
+				name="flight"
+				open={currentAction?.type === "update"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (open) return;
+					setCurrentAction(undefined);
 				}}
-			/>
+			>
+				<FlightForm
+					defaultValues={currentAction?.flight}
+					onSubmit={(data) => {
+						const id = currentAction?.flight?.airplane_id;
+						if (mutations.update.isPending || id === undefined) return;
+						mutations.update.mutate({
+							...data,
+							flight_id: id,
+						});
+						setCurrentAction(undefined);
+					}}
+				/>
+			</FormSheet>
 
 			<DeleteDialog
 				loading={mutations.delete.isPending}
-				open={openDialog?.type === "delete"}
+				open={currentAction?.type === "delete"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (!open) setCurrentAction(undefined);
 				}}
 				onConfirm={() => {
-					const id = openDialog?.flight?.flight_id;
+					const id = currentAction?.flight?.flight_id;
 					if (mutations.delete.isPending || id === undefined) return;
 					mutations.delete.mutate(id);
-					setOpenDialog(undefined);
+					setCurrentAction(undefined);
 				}}
 			/>
 
 			<Button
 				className="mb-4"
 				variant="outline"
-				onClick={() => setOpenDialog({ type: "create" })}
+				onClick={() => setCurrentAction({ type: "create" })}
 			>
 				<Plus size={16} />
 				<span>Add Flight</span>

@@ -1,9 +1,9 @@
+import { ActionsDropdown } from "@/components/ActionsDropdown";
 import { ColumnHeader } from "@/components/ColumnHeader";
 import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { AddEmployee } from "@/components/staff/AddEmployee";
-import { EmployeeActions } from "@/components/staff/EmployeeActions";
-import { EmployeeUpdate } from "@/components/staff/EmployeeUpdate";
+import { FormSheet } from "@/components/FormSheet";
+import { EmployeeForm } from "@/components/staff/EmployeeForm";
 import { Button } from "@/components/ui/Button";
 import { useApiMutation } from "@/lib/useApiMutation";
 import type { Employee } from "@/schema";
@@ -27,7 +27,7 @@ const SALARY_FORMAT = new Intl.NumberFormat("en-GB", {
 
 export function StaffTable() {
 	const [sorting, setSorting] = useState<SortingState>([]);
-	const [openDialog, setOpenDialog] = useState<
+	const [currentAction, setCurrentAction] = useState<
 		{ type: "create" | "delete" | "update"; employee?: Employee } | undefined
 	>();
 
@@ -93,17 +93,18 @@ export function StaffTable() {
 				cell: ({ row }) => {
 					const employee = row.original;
 					return (
-						<EmployeeActions
-							employee={employee}
-							onDialogChange={(dialog) => {
-								setOpenDialog(
-									dialog !== undefined
-										? {
-												type: dialog,
-												employee,
-											}
-										: undefined,
-								);
+						<ActionsDropdown
+							id={employee.employee_id.toString()}
+							onSelect={(action) => {
+								if (action !== "update" && action !== "delete") {
+									setCurrentAction(undefined);
+									return;
+								}
+
+								setCurrentAction({
+									type: action,
+									employee,
+								});
 							}}
 						/>
 					);
@@ -126,46 +127,57 @@ export function StaffTable() {
 
 	return (
 		<>
-			<AddEmployee
-				open={openDialog?.type === "create"}
+			<FormSheet
+				name="employee"
+				open={currentAction?.type === "create"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (open) return;
+					setCurrentAction(undefined);
 				}}
-				onSubmit={(data) => {
-					if (mutations.create.isPending) return;
-					mutations.create.mutate(data);
-					setOpenDialog(undefined);
-				}}
-			/>
+			>
+				<EmployeeForm
+					onSubmit={(data) => {
+						if (mutations.create.isPending) return;
+						mutations.create.mutate(data);
+						setCurrentAction(undefined);
+					}}
+				/>
+			</FormSheet>
 
-			<EmployeeUpdate
-				employee={openDialog?.employee}
-				open={openDialog?.type === "update"}
+			<FormSheet
+				update
+				name="employee"
+				open={currentAction?.type === "update"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (open) return;
+					setCurrentAction(undefined);
 				}}
-				onSubmit={(data) => {
-					const id = openDialog?.employee?.employee_id;
-					if (mutations.update.isPending || id === undefined) return;
-					mutations.update.mutate({
-						...data,
-						employee_id: id,
-					});
-					setOpenDialog(undefined);
-				}}
-			/>
+			>
+				<EmployeeForm
+					defaultValues={currentAction?.employee}
+					onSubmit={(data) => {
+						const id = currentAction?.employee?.employee_id;
+						if (mutations.update.isPending || id === undefined) return;
+						mutations.update.mutate({
+							...data,
+							employee_id: id,
+						});
+						setCurrentAction(undefined);
+					}}
+				/>
+			</FormSheet>
 
 			<DeleteDialog
 				loading={mutations.delete.isPending}
-				open={openDialog?.type === "delete"}
+				open={currentAction?.type === "delete"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (!open) setCurrentAction(undefined);
 				}}
 				onConfirm={() => {
-					const id = openDialog?.employee?.employee_id;
+					const id = currentAction?.employee?.employee_id;
 					if (mutations.delete.isPending || id === undefined) return;
 					mutations.delete.mutate(id);
-					setOpenDialog(undefined);
+					setCurrentAction(undefined);
 				}}
 			/>
 
@@ -173,7 +185,7 @@ export function StaffTable() {
 				className="mb-4"
 				variant="outline"
 				onClick={() =>
-					setOpenDialog({
+					setCurrentAction({
 						type: "create",
 					})
 				}

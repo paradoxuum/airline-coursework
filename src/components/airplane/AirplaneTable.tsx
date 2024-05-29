@@ -1,9 +1,9 @@
+import { ActionsDropdown } from "@/components/ActionsDropdown";
 import { ColumnHeader } from "@/components/ColumnHeader";
 import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { AddAirplane } from "@/components/airplane/AddAirplane";
-import { AirplaneActions } from "@/components/airplane/AirplaneActions";
-import { AirplaneUpdate } from "@/components/airplane/AirplaneUpdate";
+import { FormSheet } from "@/components/FormSheet";
+import { AirplaneForm } from "@/components/airplane/AirplaneForm";
 import { Button } from "@/components/ui/Button";
 import { useApiMutation } from "@/lib/useApiMutation";
 import type { Airplane } from "@/schema";
@@ -22,7 +22,7 @@ import { useMemo, useState } from "react";
 
 export function AirplaneTable() {
 	const [sorting, setSorting] = useState<SortingState>([]);
-	const [openDialog, setOpenDialog] = useState<
+	const [currentAction, setCurrentAction] = useState<
 		{ type: "create" | "delete" | "update"; airplane?: Airplane } | undefined
 	>();
 
@@ -70,17 +70,18 @@ export function AirplaneTable() {
 				cell: ({ row }) => {
 					const airplane = row.original;
 					return (
-						<AirplaneActions
-							airplane={airplane}
-							onDialogChange={(dialog) => {
-								setOpenDialog(
-									dialog !== undefined
-										? {
-												type: dialog,
-												airplane,
-											}
-										: undefined,
-								);
+						<ActionsDropdown
+							id={airplane.airplane_id.toString()}
+							onSelect={(action) => {
+								if (action !== "update" && action !== "delete") {
+									setCurrentAction(undefined);
+									return;
+								}
+
+								setCurrentAction({
+									type: action,
+									airplane,
+								});
 							}}
 						/>
 					);
@@ -103,46 +104,57 @@ export function AirplaneTable() {
 
 	return (
 		<>
-			<AddAirplane
-				open={openDialog?.type === "create"}
+			<FormSheet
+				name="airplane"
+				open={currentAction?.type === "create"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (open) return;
+					setCurrentAction(undefined);
 				}}
-				onSubmit={(data) => {
-					if (mutations.create.isPending) return;
-					mutations.create.mutate(data);
-					setOpenDialog(undefined);
-				}}
-			/>
+			>
+				<AirplaneForm
+					onSubmit={(data) => {
+						if (mutations.create.isPending) return;
+						mutations.create.mutate(data);
+						setCurrentAction(undefined);
+					}}
+				/>
+			</FormSheet>
 
-			<AirplaneUpdate
-				airplane={openDialog?.airplane}
-				open={openDialog?.type === "update"}
+			<FormSheet
+				update
+				name="airplane"
+				open={currentAction?.type === "update"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (open) return;
+					setCurrentAction(undefined);
 				}}
-				onSubmit={(data) => {
-					const id = openDialog?.airplane?.airplane_id;
-					if (mutations.update.isPending || id === undefined) return;
-					mutations.update.mutate({
-						...data,
-						airplane_id: id,
-					});
-					setOpenDialog(undefined);
-				}}
-			/>
+			>
+				<AirplaneForm
+					defaultValues={currentAction?.airplane}
+					onSubmit={(data) => {
+						const id = currentAction?.airplane?.airplane_id;
+						if (mutations.update.isPending || id === undefined) return;
+						mutations.update.mutate({
+							...data,
+							airplane_id: id,
+						});
+						setCurrentAction(undefined);
+					}}
+				/>
+			</FormSheet>
 
 			<DeleteDialog
 				loading={mutations.delete.isPending}
-				open={openDialog?.type === "delete"}
+				open={currentAction?.type === "delete"}
 				onOpenChange={(open) => {
-					if (!open) setOpenDialog(undefined);
+					if (!open) setCurrentAction(undefined);
 				}}
 				onConfirm={() => {
-					const id = openDialog?.airplane?.airplane_id;
+					const id = currentAction?.airplane?.airplane_id;
 					if (mutations.delete.isPending || id === undefined) return;
 					mutations.delete.mutate(id);
-					setOpenDialog(undefined);
+					setCurrentAction(undefined);
 				}}
 			/>
 
@@ -150,7 +162,7 @@ export function AirplaneTable() {
 				className="mb-4"
 				variant="outline"
 				onClick={() =>
-					setOpenDialog({
+					setCurrentAction({
 						type: "create",
 					})
 				}
