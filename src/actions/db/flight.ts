@@ -49,8 +49,8 @@ export class FlightData
 			database,
 			0,
 			data.flight_number,
-			data.arrival_date,
 			data.departure_date,
+			data.arrival_date,
 			data.airplane_id,
 		);
 	}

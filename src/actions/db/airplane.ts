@@ -31,9 +31,9 @@ export class AirplaneData
 		return new AirplaneData(
 			db,
 			0,
-			data.serial_number,
 			data.manufacturer,
 			data.model,
+			data.serial_number,
 		);
 	}
 
