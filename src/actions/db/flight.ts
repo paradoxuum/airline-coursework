@@ -129,7 +129,6 @@ export class FlightData
 	}
 
 	async update(data: Partial<Omit<Flight, "flight_id">>) {
-		console.log("Update");
 		this.flight_number = data.flight_number ?? this.flight_number;
 		this.departure_date =
 			data.departure_date !== undefined
@@ -141,7 +140,7 @@ export class FlightData
 				: this.arrival_date;
 		this.airplane_id = data.airplane_id ?? this.airplane_id;
 
-		const query = pgp.helpers.update(data, null, "flights");
+		const query = pgp.helpers.update(data, undefined, "flights");
 		await this.getDatabase().result(`${query} WHERE flight_id = $1`, [
 			this.flight_id,
 		]);

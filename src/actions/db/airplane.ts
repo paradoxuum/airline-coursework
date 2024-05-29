@@ -81,8 +81,8 @@ export class AirplaneData
 		this.model = data.model ?? this.model;
 		this.serial_number = data.serial_number ?? this.serial_number;
 
-		const query = pgp.helpers.update(data, null, "staff");
-		await this.getDatabase().result(`${query} WHERE airplane_id = $2`, [
+		const query = pgp.helpers.update(data, undefined, "airplanes");
+		await this.getDatabase().result(`${query} WHERE airplane_id = $1`, [
 			this.airplane_id,
 		]);
 	}

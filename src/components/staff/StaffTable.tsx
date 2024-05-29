@@ -96,11 +96,14 @@ export function StaffTable() {
 						<EmployeeActions
 							employee={employee}
 							onDialogChange={(dialog) => {
-								if (dialog !== undefined) {
-									setOpenDialog({ type: dialog, employee });
-								} else {
-									setOpenDialog(undefined);
-								}
+								setOpenDialog(
+									dialog !== undefined
+										? {
+												type: dialog,
+												employee,
+											}
+										: undefined,
+								);
 							}}
 						/>
 					);
@@ -136,6 +139,7 @@ export function StaffTable() {
 			/>
 
 			<EmployeeUpdate
+				employee={openDialog?.employee}
 				open={openDialog?.type === "update"}
 				onOpenChange={(open) => {
 					if (!open) setOpenDialog(undefined);

@@ -95,8 +95,8 @@ export class PassengerData
 		this.address = data.address ?? this.address;
 		this.phone = data.phone ?? this.phone;
 
-		const query = pgp.helpers.update(data, null, "staff");
-		await this.getDatabase().result(`${query} WHERE passenger_id = $2`, [
+		const query = pgp.helpers.update(data, undefined, "passengers");
+		await this.getDatabase().result(`${query} WHERE passenger_id = $1`, [
 			this.passenger_id,
 		]);
 	}

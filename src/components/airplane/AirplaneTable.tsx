@@ -73,11 +73,14 @@ export function AirplaneTable() {
 						<AirplaneActions
 							airplane={airplane}
 							onDialogChange={(dialog) => {
-								if (dialog !== undefined) {
-									setOpenDialog({ type: dialog, airplane });
-								} else {
-									setOpenDialog(undefined);
-								}
+								setOpenDialog(
+									dialog !== undefined
+										? {
+												type: dialog,
+												airplane,
+											}
+										: undefined,
+								);
 							}}
 						/>
 					);
@@ -113,6 +116,7 @@ export function AirplaneTable() {
 			/>
 
 			<AirplaneUpdate
+				airplane={openDialog?.airplane}
 				open={openDialog?.type === "update"}
 				onOpenChange={(open) => {
 					if (!open) setOpenDialog(undefined);

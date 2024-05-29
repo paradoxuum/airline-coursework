@@ -130,8 +130,8 @@ export class EmployeeData
 		this.phone = data.phone ?? this.phone;
 		this.salary = data.salary ?? this.salary;
 
-		const query = pgp.helpers.update(data, null, "staff");
-		await this.getDatabase().result(`${query} WHERE employee_id = $2`, [
+		const query = pgp.helpers.update(data, undefined, "staff");
+		await this.getDatabase().result(`${query} WHERE employee_id = $1`, [
 			this.employee_id,
 		]);
 	}

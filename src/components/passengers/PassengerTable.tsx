@@ -81,11 +81,14 @@ export function PassengerTable() {
 						<PassengerActions
 							passenger={passenger}
 							onDialogChange={(dialog) => {
-								if (dialog !== undefined) {
-									setOpenDialog({ type: dialog, passenger });
-								} else {
-									setOpenDialog(undefined);
-								}
+								setOpenDialog(
+									dialog !== undefined
+										? {
+												type: dialog,
+												passenger,
+											}
+										: undefined,
+								);
 							}}
 						/>
 					);
@@ -121,6 +124,7 @@ export function PassengerTable() {
 			/>
 
 			<PassengerUpdate
+				passenger={openDialog?.passenger}
 				open={openDialog?.type === "update"}
 				onOpenChange={(open) => {
 					if (!open) setOpenDialog(undefined);

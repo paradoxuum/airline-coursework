@@ -2,6 +2,7 @@
 import { AirplaneTable } from "@/components/airplane";
 import { FlightTable } from "@/components/flights";
 import { PassengerTable } from "@/components/passengers";
+import { StaffTable } from "@/components/staff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import Layout from "@/layouts/Layout.astro";
 ---
@@ -32,6 +33,15 @@ import Layout from "@/layouts/Layout.astro";
       </CardHeader>
       <CardContent>
         <PassengerTable client:only="react" />
+      </CardContent>
+    </Card>
+
+    <Card className="mx-8">
+      <CardHeader>
+        <CardTitle>Staff</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <StaffTable client:only="react" />
       </CardContent>
     </Card>
   </div>
