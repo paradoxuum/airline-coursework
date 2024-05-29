@@ -38,6 +38,7 @@ export function PassengerTable() {
 		create: actions.passenger.create,
 		update: actions.passenger.update,
 		delete: (id) => actions.passenger.delete({ passenger_id: id }),
+		getId: (data) => data.passenger_id,
 		name: "passenger",
 		key: ["passengers"],
 	});

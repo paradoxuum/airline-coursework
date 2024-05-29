@@ -1,6 +1,6 @@
 import type { DatabaseInteractions } from "@/actions/db/database";
 import { PersonData } from "@/actions/db/person";
-import type { Database } from "@/db";
+import { pgp, type Database } from "@/db";
 import type { Passenger } from "@/schema";
 import { plainToInstance } from "class-transformer";
 
@@ -11,7 +11,7 @@ export class PassengerData
 {
 	constructor(
 		database: Database,
-		private readonly passenger_id: number,
+		private passenger_id: number,
 		first_name: string,
 		last_name: string,
 		address: string,
@@ -43,7 +43,7 @@ export class PassengerData
 	}
 
 	static async getFromId(db: Database, id: number) {
-		const result = db.oneOrNone<Passenger | undefined>(
+		const result = await db.oneOrNone<Passenger | undefined>(
 			"SELECT * FROM passengers WHERE passenger_id = $1",
 			[id],
 		);
@@ -73,7 +73,7 @@ export class PassengerData
 	}
 
 	async insert() {
-		return this.getDatabase().one<number>(
+		const id = await this.getDatabase().one<number>(
 			`INSERT INTO passengers($1:name)
 			VALUES($1:csv)
 			RETURNING passenger_id`,
@@ -86,6 +86,7 @@ export class PassengerData
 				} as Omit<Passenger, "passenger_id">,
 			],
 		);
+		this.passenger_id = id;
 	}
 
 	async update(data: Partial<Omit<Passenger, "passenger_id">>) {
@@ -93,10 +94,11 @@ export class PassengerData
 		this.last_name = data.last_name ?? this.last_name;
 		this.address = data.address ?? this.address;
 		this.phone = data.phone ?? this.phone;
-		await this.getDatabase().result(
-			"UPDATE passengers SET $1:name WHERE passenger_id = $2",
-			[data, this.passenger_id],
-		);
+
+		const query = pgp.helpers.update(data, null, "staff");
+		await this.getDatabase().result(`${query} WHERE passenger_id = $2`, [
+			this.passenger_id,
+		]);
 	}
 
 	async delete() {

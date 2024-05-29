@@ -5,9 +5,10 @@ import { useMemo } from "react";
 import { toast } from "sonner";
 
 interface MutationProps<T, I> {
-	create: (data: I) => Promise<number>;
-	update: (data: T) => Promise<void>;
-	delete: (id: number) => Promise<void>;
+	create: (data: I) => Promise<T>;
+	update: (data: T) => Promise<T>;
+	delete: (id: number) => Promise<T>;
+	getId: (data: T) => number;
 	name: string;
 	key: string[];
 }
@@ -18,7 +19,8 @@ export function useApiMutation<T, I>(props: MutationProps<T, I>) {
 	const createMutation = useMutation(
 		{
 			mutationFn: props.create,
-			onSuccess: (id) => {
+			onSuccess: (data) => {
+				const id = props.getId(data);
 				toast.success(`${capitalizedName} ${id} created`);
 				client.invalidateQueries({ queryKey: props.key });
 			},
@@ -33,12 +35,14 @@ export function useApiMutation<T, I>(props: MutationProps<T, I>) {
 	const updateMutation = useMutation(
 		{
 			mutationFn: props.update,
-			onSuccess: (id) => {
+			onSuccess: (data) => {
+				const id = props.getId(data);
 				toast.success(`${capitalizedName} ${id} updated`);
 				client.invalidateQueries({ queryKey: props.key });
 			},
-			onError: (err) => {
-				toast.error(`Failed to update ${props.name}`);
+			onError: (err, data) => {
+				const id = props.getId(data);
+				toast.error(`Failed to update ${props.name} ${id}`);
 				console.error(`Failed to update ${props.name}`, err);
 			},
 		},
@@ -48,7 +52,8 @@ export function useApiMutation<T, I>(props: MutationProps<T, I>) {
 	const deleteMutation = useMutation(
 		{
 			mutationFn: props.delete,
-			onSuccess: (_, id) => {
+			onSuccess: (data) => {
+				const id = props.getId(data);
 				toast.success(`${capitalizedName} ${id} deleted`);
 				client.invalidateQueries({ queryKey: props.key });
 			},

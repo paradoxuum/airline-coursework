@@ -38,6 +38,7 @@ export function AirplaneTable() {
 		create: actions.airplane.create,
 		update: actions.airplane.update,
 		delete: (id) => actions.airplane.delete({ airplane_id: id }),
+		getId: (data) => data.airplane_id,
 		name: "airplane",
 		key: ["airplanes"],
 	});

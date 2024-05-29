@@ -4,7 +4,7 @@ import {
 } from "@/actions/db/database";
 import { EmployeeData } from "@/actions/db/employee";
 import { PassengerData } from "@/actions/db/passenger";
-import type { Database } from "@/db";
+import { pgp, type Database } from "@/db";
 import type { Flight } from "@/schema";
 import { Exclude, plainToInstance } from "class-transformer";
 
@@ -26,7 +26,7 @@ export class FlightData
 
 	constructor(
 		database: Database,
-		private readonly flight_id: number,
+		private flight_id: number,
 		private flight_number: string,
 		departure_date: string,
 		arrival_date: string,
@@ -64,7 +64,7 @@ export class FlightData
 	 * @returns The instance of the flight
 	 */
 	static async getFromId(db: Database, id: number) {
-		const result = db.oneOrNone<Flight | undefined>(
+		const result = await db.oneOrNone<Flight | undefined>(
 			"SELECT * FROM flights WHERE flight_id = $1",
 			[id],
 		);
@@ -112,7 +112,7 @@ export class FlightData
 	}
 
 	async insert() {
-		return this.getDatabase().one<number>(
+		const id = await this.getDatabase().one<number>(
 			`INSERT INTO flights($1:name)
 			VALUES($1:csv)
 			RETURNING flight_id`,
@@ -125,9 +125,11 @@ export class FlightData
 				} as Omit<Flight, "flight_id">,
 			],
 		);
+		this.flight_id = id;
 	}
 
 	async update(data: Partial<Omit<Flight, "flight_id">>) {
+		console.log("Update");
 		this.flight_number = data.flight_number ?? this.flight_number;
 		this.departure_date =
 			data.departure_date !== undefined
@@ -138,10 +140,11 @@ export class FlightData
 				? new Date(data.arrival_date)
 				: this.arrival_date;
 		this.airplane_id = data.airplane_id ?? this.airplane_id;
-		await this.getDatabase().result(
-			"UPDATE flights SET $1:name WHERE flight_id = $2",
-			[data, this.flight_id],
-		);
+
+		const query = pgp.helpers.update(data, null, "flights");
+		await this.getDatabase().result(`${query} WHERE flight_id = $1`, [
+			this.flight_id,
+		]);
 	}
 
 	async delete() {

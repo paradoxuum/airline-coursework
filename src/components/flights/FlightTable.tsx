@@ -38,6 +38,7 @@ export function FlightTable() {
 		create: actions.flight.create,
 		update: actions.flight.update,
 		delete: (id) => actions.flight.delete({ flight_id: id }),
+		getId: (data) => data.flight_id,
 		name: "flight",
 		key: ["flights"],
 	});

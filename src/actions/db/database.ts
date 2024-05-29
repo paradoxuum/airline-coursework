@@ -22,9 +22,8 @@ export abstract class DatabaseHolder {
 export interface DatabaseInteractions<T, I> {
 	/**
 	 * Inserts the entity into the database.
-	 * @returns The id of the inserted entity
 	 */
-	insert(data: T): Promise<number>;
+	insert(data: T): Promise<void>;
 
 	/**
 	 * Updates the entity with the given data.

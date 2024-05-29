@@ -2,7 +2,7 @@ import {
 	DatabaseHolder,
 	type DatabaseInteractions,
 } from "@/actions/db/database";
-import type { Database } from "@/db";
+import { pgp, type Database } from "@/db";
 import type { Airplane } from "@/schema";
 import { plainToInstance } from "class-transformer";
 
@@ -12,17 +12,17 @@ export class AirplaneData
 {
 	constructor(
 		database: Database,
-		private readonly airplane_id: number,
-		private serial_number: string,
+		private airplane_id: number,
 		private manufacturer: string,
 		private model: string,
+		private serial_number: string,
 	) {
 		super(database);
 	}
 
 	/**
-	 * Creates a new instance of FlightData with the given data. This should primarily be used
-	 * when creating a new flight.
+	 * Creates a new instance of AirplaneData with the given data. This should primarily be used
+	 * when creating a new airplane.
 	 * @param database The database to use
 	 * @param data The data to use
 	 * @returns The new instance
@@ -46,7 +46,7 @@ export class AirplaneData
 	 * @returns The instance of the airplane
 	 */
 	static async getFromId(db: Database, id: number) {
-		const result = db.oneOrNone<Airplane | undefined>(
+		const result = await db.oneOrNone<Airplane | undefined>(
 			"SELECT * FROM airplanes WHERE airplane_id = $1",
 			[id],
 		);
@@ -56,12 +56,12 @@ export class AirplaneData
 	}
 
 	static async getAll(db: Database) {
-		const result = await db.any<Airplane>("SELECT * FROM flights");
+		const result = await db.any<Airplane>("SELECT * FROM airplanes");
 		return result.map((data) => plainToInstance(AirplaneData, data));
 	}
 
 	async insert() {
-		return this.getDatabase().one<number>(
+		const id = await this.getDatabase().one<number>(
 			`INSERT INTO airplanes($1:name)
 			VALUES($1:csv)
 			RETURNING airplane_id`,
@@ -73,16 +73,18 @@ export class AirplaneData
 				} as Omit<Airplane, "airplane_id">,
 			],
 		);
+		this.airplane_id = id;
 	}
 
 	async update(data: Partial<Omit<Airplane, "airplane_id">>) {
 		this.manufacturer = data.manufacturer ?? this.manufacturer;
 		this.model = data.model ?? this.model;
 		this.serial_number = data.serial_number ?? this.serial_number;
-		await this.getDatabase().result(
-			"UPDATE airplanes SET $1:name WHERE airplane_id = $2",
-			[data, this.airplane_id],
-		);
+
+		const query = pgp.helpers.update(data, null, "staff");
+		await this.getDatabase().result(`${query} WHERE airplane_id = $2`, [
+			this.airplane_id,
+		]);
 	}
 
 	async delete() {

@@ -1,6 +1,6 @@
 import type { DatabaseInteractions } from "@/actions/db/database";
 import { PersonData } from "@/actions/db/person";
-import type { Database } from "@/db";
+import { pgp, type Database } from "@/db";
 import type { Employee } from "@/schema";
 import { Exclude, plainToInstance } from "class-transformer";
 
@@ -15,7 +15,7 @@ export class EmployeeData
 
 	constructor(
 		database: Database,
-		private readonly employee_id: number,
+		private employee_id: number,
 		first_name: string,
 		last_name: string,
 		address: string,
@@ -46,7 +46,7 @@ export class EmployeeData
 	 * @returns The instance of the employee
 	 */
 	static async getFromId(db: Database, id: number) {
-		const result = db.oneOrNone<Employee | undefined>(
+		const result = await db.oneOrNone<Employee | undefined>(
 			"SELECT * FROM staff WHERE employee_id = $1",
 			[id],
 		);
@@ -77,9 +77,9 @@ export class EmployeeData
 	static async getAllForFlight(db: Database, flight_id: number) {
 		const result = await db.any<Employee>(
 			`SELECT * FROM staff
-			JOIN flight_crew
-				ON staff.employee_id = flight_crew.employee_id
-			WHERE flight_crew.flight_id = $1`,
+			JOIN flight_staff
+				ON staff.employee_id = flight_staff.employee_id
+			WHERE flight_staff.flight_id = $1`,
 			[flight_id],
 		);
 		return await Promise.all(
@@ -106,7 +106,7 @@ export class EmployeeData
 	}
 
 	async insert() {
-		return this.getDatabase().one<number>(
+		const id = await this.getDatabase().one<number>(
 			`INSERT INTO staff($1:name)
 			VALUES($1:csv)
 			RETURNING employee_id`,
@@ -120,6 +120,7 @@ export class EmployeeData
 				} as Omit<Employee, "employee_id">,
 			],
 		);
+		this.employee_id = id;
 	}
 
 	async update(data: Partial<Omit<Employee, "employee_id">>) {
@@ -128,10 +129,11 @@ export class EmployeeData
 		this.address = data.address ?? this.address;
 		this.phone = data.phone ?? this.phone;
 		this.salary = data.salary ?? this.salary;
-		await this.getDatabase().result(
-			"UPDATE staff SET $1:name WHERE employee_id = $2",
-			[data, this.employee_id],
-		);
+
+		const query = pgp.helpers.update(data, null, "staff");
+		await this.getDatabase().result(`${query} WHERE employee_id = $2`, [
+			this.employee_id,
+		]);
 	}
 
 	async delete() {

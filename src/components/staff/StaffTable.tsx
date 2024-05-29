@@ -43,6 +43,7 @@ export function StaffTable() {
 		create: actions.staff.create,
 		update: actions.staff.update,
 		delete: (id) => actions.staff.delete({ employee_id: id }),
+		getId: (data) => data.employee_id,
 		name: "staff",
 		key: ["staff"],
 	});
