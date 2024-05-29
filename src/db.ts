@@ -1,11 +1,14 @@
 import pgPromise from "pg-promise";
 
-const HOST = import.meta.env.DB_HOST ?? "localhost";
-const PORT = import.meta.env.DB_PORT ?? "5432";
-const NAME = import.meta.env.DB_NAME;
-const USER = import.meta.env.DB_USER;
-const PASS = import.meta.env.DB_PASSWORD;
+const PORT = import.meta.env.DB_PORT;
 
 export const pgp = pgPromise({});
-export const db = pgp(`postgres://${USER}:${PASS}@${HOST}:${PORT}/${NAME}`);
+export const db = pgp({
+	host: import.meta.env.DB_HOST,
+	port: PORT !== undefined ? Number.parseInt(PORT) : 5432,
+	user: import.meta.env.DB_USER,
+	password: import.meta.env.DB_PASSWORD,
+	database: import.meta.env.DB_NAME,
+	query_timeout: 3000,
+});
 export type Database = typeof db;
