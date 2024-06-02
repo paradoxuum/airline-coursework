@@ -40,6 +40,9 @@ export function ActionsDropdown<T>({
 				>
 					Copy ID
 				</DropdownMenuItem>
+
+				{children}
+
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onClick={() => onSelect("update")}>
 					Update
@@ -50,8 +53,6 @@ export function ActionsDropdown<T>({
 				>
 					Delete
 				</DropdownMenuItem>
-
-				{children}
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

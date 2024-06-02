@@ -1,3 +1,4 @@
+import type { AirportData } from "@/actions/db/airport";
 import {
 	DatabaseHolder,
 	type DatabaseInteractions,
@@ -175,23 +176,77 @@ export class FlightData
 	}
 
 	/**
-	 * Adds a stop to the flight.
-	 * @param airport_code The airport code of the stop to add
+	 * Adds an employee to the flight.
+	 * @param employee The employee to add
 	 */
-	async addStop(aiportId: number) {
-		const airportCode = await this.getDatabase().one<string>(
-			"SELECT airport_code FROM airports WHERE airport_id = $1",
-			[aiportId],
-		);
+	async addEmployee(employee: EmployeeData) {
+		if (this.crew.some((p) => p.getEmployeeId() === employee.getEmployeeId())) {
+			return;
+		}
 
-		if (this.stops.includes(airportCode)) return;
+		await this.getDatabase().result(
+			`INSERT INTO flight_staff(flight_id, employee_id)
+			VALUES($1, $2)`,
+			[this.flight_id, employee.getEmployeeId()],
+		);
+		this.crew.push(employee);
+	}
+
+	/**
+	 * Adds a stop to the flight.
+	 * @param airport The airport to add
+	 */
+	async addStop(airport: AirportData) {
+		if (this.stops.includes(airport.getAirportCode())) return;
 
 		await this.getDatabase().result(
 			`INSERT INTO flight_stops(flight_id, airport_id)
 			VALUES($1, $2)`,
-			[this.flight_id, aiportId],
+			[this.flight_id, airport.getAirportId()],
 		);
-		this.stops.push(airportCode);
+		this.stops.push(airport.getAirportCode());
+	}
+
+	/**
+	 * Removes a passenger from the flight.
+	 * @param passenger The passenger to remove
+	 */
+	async removePassenger(passenger: PassengerData) {
+		await this.getDatabase().result(
+			"DELETE FROM flight_passengers WHERE flight_id = $1 AND passenger_id = $2",
+			[this.flight_id, passenger.getPassengerId()],
+		);
+		this.passengers = this.passengers.filter(
+			(p) => p.getPassengerId() !== passenger.getPassengerId(),
+		);
+	}
+
+	/**
+	 * Removes an employee from the flight.
+	 * @param employee The employee to remove
+	 */
+	async removeEmployee(employee: EmployeeData) {
+		await this.getDatabase().result(
+			"DELETE FROM flight_staff WHERE flight_id = $1 AND employee_id = $2",
+			[this.flight_id, employee.getEmployeeId()],
+		);
+		this.crew = this.crew.filter(
+			(p) => p.getEmployeeId() !== employee.getEmployeeId(),
+		);
+	}
+
+	/**
+	 * Removes a stop from the flight.
+	 * @param airport The airport to remove
+	 */
+	async removeStop(airport: AirportData) {
+		if (!this.stops.includes(airport.getAirportCode())) return;
+
+		await this.getDatabase().result(
+			"DELETE FROM flight_stops WHERE flight_id = $1 AND airport_id = $2",
+			[this.flight_id, airport.getAirportId()],
+		);
+		this.stops = this.stops.filter((s) => s !== airport.getAirportCode());
 	}
 
 	getFlightId() {

@@ -1,12 +1,12 @@
-import { ActionsDropdown } from "@/components/ActionsDropdown";
 import { ColumnHeader } from "@/components/ColumnHeader";
 import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { FormSheet } from "@/components/FormSheet";
+import { FlightActions } from "@/components/flights/FlightActions";
 import { FlightForm } from "@/components/flights/FlightForm";
 import { Button } from "@/components/ui/Button";
 import { useApiMutation } from "@/lib/useApiMutation";
-import type { Flight } from "@/schema";
+import type { Flight, FullFlight } from "@/schema";
 import { client } from "@/stores/app";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -43,7 +43,7 @@ export function FlightTable() {
 		key: ["flights"],
 	});
 
-	const columns = useMemo<ColumnDef<Flight>[]>(
+	const columns = useMemo<ColumnDef<FullFlight>[]>(
 		() => [
 			{
 				accessorKey: "flight_id",
@@ -82,12 +82,30 @@ export function FlightTable() {
 				),
 			},
 			{
+				id: "passengers",
+				header: ({ column }) => (
+					<ColumnHeader column={column} title="Passengers" />
+				),
+				cell: ({ row }) => {
+					const flight = row.original;
+					return <p>{flight.passengers.length}</p>;
+				},
+			},
+			{
+				id: "crew",
+				header: ({ column }) => <ColumnHeader column={column} title="Crew" />,
+				cell: ({ row }) => {
+					const flight = row.original;
+					return <p>{flight.crew.length}</p>;
+				},
+			},
+			{
 				id: "actions",
 				cell: ({ row }) => {
 					const flight = row.original;
 					return (
-						<ActionsDropdown
-							id={flight.flight_id.toString()}
+						<FlightActions
+							data={flight}
 							onSelect={(action) => {
 								if (action !== "update" && action !== "delete") {
 									setCurrentAction(undefined);

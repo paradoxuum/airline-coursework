@@ -43,3 +43,9 @@ export type Employee = z.infer<typeof staffSchema>;
 export type Airplane = z.infer<typeof airplaneSchema>;
 export type Airport = z.infer<typeof airportSchema>;
 export type Flight = z.infer<typeof flightSchema>;
+
+export type FullFlight = Flight & {
+	passengers: Passenger[];
+	crew: Employee[];
+	stops: string[];
+};
