@@ -47,5 +47,5 @@ export type Flight = z.infer<typeof flightSchema>;
 export type FullFlight = Flight & {
 	passengers: Passenger[];
 	crew: Employee[];
-	stops: string[];
+	stops: Airport[];
 };

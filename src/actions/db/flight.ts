@@ -1,4 +1,4 @@
-import type { AirportData } from "@/actions/db/airport";
+import { AirportData } from "@/actions/db/airport";
 import {
 	DatabaseHolder,
 	type DatabaseInteractions,
@@ -6,7 +6,7 @@ import {
 import { EmployeeData } from "@/actions/db/employee";
 import { PassengerData } from "@/actions/db/passenger";
 import { pgp, type Database } from "@/db";
-import type { Flight } from "@/schema";
+import type { Airport, Flight } from "@/schema";
 import { Exclude, plainToInstance } from "class-transformer";
 
 export class FlightData
@@ -23,7 +23,7 @@ export class FlightData
 	private crew: EmployeeData[] = [];
 
 	@Exclude({ toClassOnly: true })
-	private stops: string[] = [];
+	private stops: AirportData[] = [];
 
 	constructor(
 		database: Database,
@@ -101,15 +101,15 @@ export class FlightData
 		);
 		flight.crew = await EmployeeData.getAllForFlight(db, flight.getFlightId());
 
-		const stops = await db.any<string>(
-			`SELECT A.airport_code
+		const stops = await db.any<Airport>(
+			`SELECT A.*
 			FROM flight_stops FS
 			JOIN airports A
 				ON FS.airport_id = A.airport_id
 			WHERE FS.flight_id = $1`,
 			[flight.getFlightId()],
 		);
-		flight.stops = stops;
+		flight.stops = stops.map((s) => plainToInstance(AirportData, s));
 	}
 
 	async insert() {
@@ -197,14 +197,18 @@ export class FlightData
 	 * @param airport The airport to add
 	 */
 	async addStop(airport: AirportData) {
-		if (this.stops.includes(airport.getAirportCode())) return;
+		if (
+			this.stops.some((s) => s.getAirportCode() === airport.getAirportCode())
+		) {
+			return;
+		}
 
 		await this.getDatabase().result(
 			`INSERT INTO flight_stops(flight_id, airport_id)
 			VALUES($1, $2)`,
 			[this.flight_id, airport.getAirportId()],
 		);
-		this.stops.push(airport.getAirportCode());
+		this.stops.push(airport);
 	}
 
 	/**
@@ -240,13 +244,19 @@ export class FlightData
 	 * @param airport The airport to remove
 	 */
 	async removeStop(airport: AirportData) {
-		if (!this.stops.includes(airport.getAirportCode())) return;
+		if (
+			!this.stops.some((s) => s.getAirportCode() === airport.getAirportCode())
+		) {
+			return;
+		}
 
 		await this.getDatabase().result(
 			"DELETE FROM flight_stops WHERE flight_id = $1 AND airport_id = $2",
 			[this.flight_id, airport.getAirportId()],
 		);
-		this.stops = this.stops.filter((s) => s !== airport.getAirportCode());
+		this.stops = this.stops.filter(
+			(s) => s.getAirportCode() !== airport.getAirportCode(),
+		);
 	}
 
 	getFlightId() {
