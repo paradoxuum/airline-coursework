@@ -1,5 +1,6 @@
 ---
 import { AirplaneTable } from "@/components/airplane";
+import { AirportTable } from "@/components/airport/AirportTable";
 import { FlightTable } from "@/components/flights";
 import { PassengerTable } from "@/components/passengers";
 import { StaffTable } from "@/components/staff";
@@ -42,6 +43,15 @@ import Layout from "@/layouts/Layout.astro";
       </CardHeader>
       <CardContent>
         <StaffTable client:only="react" />
+      </CardContent>
+    </Card>
+
+    <Card className="mx-8">
+      <CardHeader>
+        <CardTitle>Airports</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <AirportTable client:only="react" />
       </CardContent>
     </Card>
   </div>
