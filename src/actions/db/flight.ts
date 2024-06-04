@@ -113,10 +113,10 @@ export class FlightData
 	}
 
 	async insert() {
-		const id = await this.getDatabase().one<number>(
+		const data = await this.getDatabase().one<Flight>(
 			`INSERT INTO flights($1:name)
 			VALUES($1:csv)
-			RETURNING flight_id`,
+			RETURNING *`,
 			[
 				{
 					flight_number: this.flight_number,
@@ -126,7 +126,7 @@ export class FlightData
 				} as Omit<Flight, "flight_id">,
 			],
 		);
-		this.flight_id = id;
+		this.flight_id = data.flight_id;
 	}
 
 	async update(data: Partial<Omit<Flight, "flight_id">>) {

@@ -53,17 +53,17 @@ export class AirportData
 	}
 
 	async insert() {
-		const id = await this.getDatabase().one<number>(
+		const data = await this.getDatabase().one<Airport>(
 			`INSERT INTO airports($1:name)
 			VALUES($1:csv)
-			RETURNING airport_id`,
+			RETURNING *`,
 			[
 				{
 					airport_code: this.airport_code,
 				} as Omit<Airport, "airport_id">,
 			],
 		);
-		this.airport_id = id;
+		this.airport_id = data.airport_id;
 	}
 
 	async update(data: Partial<Omit<Airport, "airport_id">>) {
