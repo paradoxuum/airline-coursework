@@ -3,7 +3,7 @@ import { DataTable } from "@/components/DataTable";
 import { AssignDialog } from "@/components/details/AssignDialog";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import type { Employee, Passenger } from "@/schema";
+import type { Airport, Employee, Passenger } from "@/schema";
 import { client } from "@/stores/app";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -32,12 +32,19 @@ interface SelectedEmployee {
 	action: Action;
 }
 
-type SelectedState = SelectedPassenger | SelectedEmployee;
+interface SelectedStop {
+	type: "airport";
+	data?: Airport;
+	action: Action;
+}
+
+type SelectedState = SelectedPassenger | SelectedEmployee | SelectedStop;
 
 export function FlightDetails({ id }: { id: number }) {
 	const [selected, setSelected] = useState<SelectedState | undefined>();
 	const [passengerSorting, setPassengerSorting] = useState<SortingState>([]);
 	const [crewSorting, setCrewSorting] = useState<SortingState>([]);
+	const [stopSorting, setStopSorting] = useState<SortingState>([]);
 
 	const query = useQuery(
 		{
@@ -124,6 +131,26 @@ export function FlightDetails({ id }: { id: number }) {
 		client,
 	);
 
+	const removeStopMutation = useMutation(
+		{
+			mutationFn: (airportId: number) =>
+				actions.flight.removeStop({
+					flight_id: id,
+					airport_id: airportId,
+				}),
+			onSuccess: () => {
+				client.invalidateQueries({
+					queryKey: ["airports"],
+				});
+			},
+			onError: (err) => {
+				toast.error("Failed to remove stop from flight");
+				console.error("Failed to remove stop from flight", err);
+			},
+		},
+		client,
+	);
+
 	const passengerColumns = useMemo<ColumnDef<Passenger>[]>(
 		() => [
 			{
@@ -181,7 +208,7 @@ export function FlightDetails({ id }: { id: number }) {
 				),
 			},
 			{
-				id: "actions",
+				id: "delete",
 				cell: ({ row }) => {
 					const employee = row.original;
 					return (
@@ -200,6 +227,38 @@ export function FlightDetails({ id }: { id: number }) {
 		[removeEmployeeMutation],
 	);
 
+	const stopColumns = useMemo<ColumnDef<Airport>[]>(
+		() => [
+			{
+				accessorKey: "airport_id",
+				header: ({ column }) => <ColumnHeader column={column} title="ID" />,
+			},
+			{
+				accessorKey: "airport_code",
+				header: ({ column }) => (
+					<ColumnHeader column={column} title="Airport Code" />
+				),
+			},
+			{
+				id: "delete",
+				cell: ({ row }) => {
+					const airport = row.original;
+					return (
+						<Button
+							className="w-4 h-4"
+							onClick={() => {
+								removeStopMutation.mutate(airport.airport_id);
+							}}
+						>
+							<Trash />
+						</Button>
+					);
+				},
+			},
+		],
+		[removeStopMutation],
+	);
+
 	const passengerTable = useReactTable({
 		data: query.data?.passengers ?? [],
 		columns: passengerColumns,
@@ -214,6 +273,17 @@ export function FlightDetails({ id }: { id: number }) {
 	const crewTable = useReactTable({
 		data: query.data?.crew ?? [],
 		columns: crewColumns,
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		onSortingChange: setCrewSorting,
+		state: {
+			sorting: crewSorting,
+		},
+	});
+
+	const stopTable = useReactTable({
+		data: query.data?.stops ?? [],
+		columns: stopColumns,
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		onSortingChange: setCrewSorting,
@@ -276,6 +346,26 @@ export function FlightDetails({ id }: { id: number }) {
 						<span className="ml-2">Add Employee</span>
 					</Button>
 					<DataTable table={crewTable} />
+				</CardContent>
+			</Card>
+
+			<Card className="mx-8">
+				<CardHeader>
+					<CardTitle>Stops</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<Button
+						onClick={() => {
+							setSelected({
+								type: "airport",
+								action: "add",
+							});
+						}}
+					>
+						<Plus className="w-4 h-4" />
+						<span className="ml-2">Add Stop</span>
+					</Button>
+					<DataTable table={stopTable} />
 				</CardContent>
 			</Card>
 		</>

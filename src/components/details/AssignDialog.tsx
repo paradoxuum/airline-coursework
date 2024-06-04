@@ -16,7 +16,7 @@ export function AssignDialog({
 	open,
 	onOpenChange,
 }: {
-	selectedType?: "passenger" | "employee";
+	selectedType?: "passenger" | "employee" | "airport";
 	onSubmit: (id: number) => void;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
