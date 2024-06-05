@@ -13,6 +13,7 @@ async function getFromId(id: number) {
 			message: `Passenger with id ${id} not found`,
 		});
 	}
+	data.setDatabase(db);
 	return data;
 }
 
@@ -41,7 +42,6 @@ export const passengerActions = {
 		handler: (input) =>
 			checkError(async () => {
 				const data = await getFromId(input.passenger_id);
-				data.setDatabase(db);
 				await data.update({
 					first_name: input.first_name,
 					last_name: input.last_name,
@@ -58,7 +58,6 @@ export const passengerActions = {
 		handler: (input) =>
 			checkError(async () => {
 				const data = await getFromId(input.passenger_id);
-				data.setDatabase(db);
 				await data.delete();
 				return instanceToPlain(data) as Passenger;
 			}),

@@ -23,6 +23,7 @@ async function getFromId(id: number) {
 			message: `Flight with id ${id} not found`,
 		});
 	}
+	data.setDatabase(db);
 	return data;
 }
 
@@ -34,6 +35,7 @@ async function getPassenger(id: number) {
 			message: `Passenger with id ${id} not found`,
 		});
 	}
+	data.setDatabase(db);
 	return data;
 }
 
@@ -45,6 +47,7 @@ async function getEmployee(id: number) {
 			message: `Employee with id ${id} not found`,
 		});
 	}
+	data.setDatabase(db);
 	return data;
 }
 
@@ -56,6 +59,7 @@ async function getAirport(id: number) {
 			message: `Airport with id ${id} not found`,
 		});
 	}
+	data.setDatabase(db);
 	return data;
 }
 
@@ -94,7 +98,6 @@ export const flightActions = {
 		handler: (input) =>
 			checkError(async () => {
 				const data = await getFromId(input.flight_id);
-				data.setDatabase(db);
 				await data.update({
 					arrival_date: input.arrival_date,
 					departure_date: input.departure_date,
@@ -111,7 +114,6 @@ export const flightActions = {
 		handler: (input) =>
 			checkError(async () => {
 				const data = await getFromId(input.flight_id);
-				data.setDatabase(db);
 				await data.delete();
 				return instanceToPlain(data) as Flight;
 			}),

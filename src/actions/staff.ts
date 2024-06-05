@@ -6,14 +6,15 @@ import { ActionError, defineAction } from "astro:actions";
 import { instanceToPlain } from "class-transformer";
 
 async function getFromId(id: number) {
-	const employee = await EmployeeData.getFromId(db, id);
-	if (employee === undefined) {
+	const data = await EmployeeData.getFromId(db, id);
+	if (data === undefined) {
 		throw new ActionError({
 			code: "NOT_FOUND",
 			message: `Employee with id ${id} not found`,
 		});
 	}
-	return employee;
+	data.setDatabase(db);
+	return data;
 }
 
 export const staffActions = {
@@ -41,7 +42,6 @@ export const staffActions = {
 		handler: (input) =>
 			checkError(async () => {
 				const data = await getFromId(input.employee_id);
-				data.setDatabase(db);
 				await data.update({
 					first_name: input.first_name,
 					last_name: input.last_name,
@@ -59,7 +59,6 @@ export const staffActions = {
 		handler: (input) =>
 			checkError(async () => {
 				const data = await getFromId(input.employee_id);
-				data.setDatabase(db);
 				await data.delete();
 				return instanceToPlain(data) as Employee;
 			}),

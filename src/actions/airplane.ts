@@ -13,6 +13,7 @@ async function getFromId(id: number) {
 			message: `Airplane with id ${id} not found`,
 		});
 	}
+	airplane.setDatabase(db);
 	return airplane;
 }
 
@@ -41,7 +42,6 @@ export const airplaneActions = {
 		handler: (input) =>
 			checkError(async () => {
 				const data = await getFromId(input.airplane_id);
-				data.setDatabase(db);
 				await data.update({
 					manufacturer: input.manufacturer,
 					model: input.model,
@@ -57,7 +57,6 @@ export const airplaneActions = {
 		handler: (input) =>
 			checkError(async () => {
 				const data = await getFromId(input.airplane_id);
-				data.setDatabase(db);
 				await data.delete();
 				return instanceToPlain(data) as Airplane;
 			}),

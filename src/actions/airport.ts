@@ -13,6 +13,7 @@ async function getFromId(id: number) {
 			message: `Airport with id ${id} not found`,
 		});
 	}
+	airport.setDatabase(db);
 	return airport;
 }
 
@@ -41,7 +42,6 @@ export const airportActions = {
 		handler: (input) =>
 			checkError(async () => {
 				const data = await getFromId(input.airport_id);
-				data.setDatabase(db);
 				await data.update({
 					airport_code: input.airport_code,
 				});
@@ -55,7 +55,6 @@ export const airportActions = {
 		handler: (input) =>
 			checkError(async () => {
 				const data = await getFromId(input.airport_id);
-				data.setDatabase(db);
 				await data.delete();
 				return instanceToPlain(data) as Airport;
 			}),
