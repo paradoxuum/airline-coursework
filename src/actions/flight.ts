@@ -141,7 +141,7 @@ export const flightActions = {
 			checkError(async () => {
 				const flight = await getFromId(input.flight_id);
 				const passenger = await getPassenger(input.passenger_id);
-				await flight.addPassenger(passenger);
+				await flight.removePassenger(passenger);
 			}),
 	}),
 
