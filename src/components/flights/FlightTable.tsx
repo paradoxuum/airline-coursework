@@ -84,7 +84,7 @@ export function FlightTable() {
 			{
 				id: "passengers",
 				header: ({ column }) => (
-					<ColumnHeader column={column} title="Passengers" />
+					<ColumnHeader column={column} title="# Passengers" />
 				),
 				cell: ({ row }) => {
 					const flight = row.original;
@@ -93,10 +93,20 @@ export function FlightTable() {
 			},
 			{
 				id: "crew",
-				header: ({ column }) => <ColumnHeader column={column} title="Crew" />,
+				header: ({ column }) => <ColumnHeader column={column} title="# Crew" />,
 				cell: ({ row }) => {
 					const flight = row.original;
 					return <p>{flight.crew.length}</p>;
+				},
+			},
+			{
+				id: "stops",
+				header: ({ column }) => (
+					<ColumnHeader column={column} title="# Stops" />
+				),
+				cell: ({ row }) => {
+					const flight = row.original;
+					return <p>{flight.stops.length}</p>;
 				},
 			},
 			{
