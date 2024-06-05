@@ -1,12 +1,12 @@
-import { ActionsDropdown } from "@/components/ActionsDropdown";
 import { ColumnHeader } from "@/components/ColumnHeader";
 import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { FormSheet } from "@/components/FormSheet";
+import { EmployeeActions } from "@/components/staff/EmployeeActions";
 import { EmployeeForm } from "@/components/staff/EmployeeForm";
 import { Button } from "@/components/ui/Button";
 import { useApiMutation } from "@/lib/useApiMutation";
-import type { Employee } from "@/schema";
+import type { Employee, FullEmployee } from "@/schema";
 import { client } from "@/stores/app";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -48,7 +48,7 @@ export function StaffTable() {
 		key: ["staff"],
 	});
 
-	const columns = useMemo<ColumnDef<Employee>[]>(
+	const columns = useMemo<ColumnDef<FullEmployee>[]>(
 		() => [
 			{
 				accessorKey: "employee_id",
@@ -87,12 +87,22 @@ export function StaffTable() {
 				},
 			},
 			{
+				id: "flights",
+				header: ({ column }) => (
+					<ColumnHeader column={column} title="# Flights" />
+				),
+				cell: ({ row }) => {
+					const employee = row.original;
+					return <p>{employee.flights.length}</p>;
+				},
+			},
+			{
 				id: "actions",
 				cell: ({ row }) => {
 					const employee = row.original;
 					return (
-						<ActionsDropdown
-							id={employee.employee_id.toString()}
+						<EmployeeActions
+							data={employee}
 							onSelect={(action) => {
 								if (action !== "update" && action !== "delete") {
 									setCurrentAction(undefined);

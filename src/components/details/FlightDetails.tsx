@@ -301,9 +301,9 @@ export function FlightDetails({ id }: { id: number }) {
 		columns: stopColumns,
 		getCoreRowModel: getCoreRowModel(),
 		getSortedRowModel: getSortedRowModel(),
-		onSortingChange: setCrewSorting,
+		onSortingChange: setStopSorting,
 		state: {
-			sorting: crewSorting,
+			sorting: stopSorting,
 		},
 	});
 

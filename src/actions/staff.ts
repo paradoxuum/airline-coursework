@@ -1,7 +1,7 @@
 import { EmployeeData } from "@/actions/db/employee";
 import { checkError } from "@/actions/util";
 import { db } from "@/db";
-import { staffSchema, type Employee } from "@/schema";
+import { staffSchema, type Employee, type FullEmployee } from "@/schema";
 import { ActionError, defineAction } from "astro:actions";
 import { instanceToPlain } from "class-transformer";
 
@@ -21,7 +21,31 @@ export const staffActions = {
 	getAll: defineAction({
 		handler: () =>
 			checkError(async () => {
-				return instanceToPlain(await EmployeeData.getAll(db)) as Employee[];
+				const employees = await EmployeeData.getAll(db);
+				return Promise.all(
+					employees.map<Promise<FullEmployee>>(async (employee) => {
+						employee.setDatabase(db);
+						const flights = await employee.fetchFlights();
+						return {
+							...(instanceToPlain(employee) as Employee),
+							flights,
+						};
+					}),
+				);
+			}),
+	}),
+
+	get: defineAction({
+		accept: "json",
+		input: staffSchema.pick({ employee_id: true }),
+		handler: (input) =>
+			checkError(async () => {
+				const data = await getFromId(input.employee_id);
+				const flights = await data.fetchFlights();
+				return {
+					...(instanceToPlain(data) as Employee),
+					flights,
+				} as FullEmployee;
 			}),
 	}),
 

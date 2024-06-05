@@ -1,7 +1,7 @@
 import { PassengerData } from "@/actions/db/passenger";
 import { checkError } from "@/actions/util";
 import { db } from "@/db";
-import { passengerSchema, type Passenger } from "@/schema";
+import { passengerSchema, type FullPassenger, type Passenger } from "@/schema";
 import { ActionError, defineAction } from "astro:actions";
 import { instanceToPlain } from "class-transformer";
 
@@ -21,7 +21,31 @@ export const passengerActions = {
 	getAll: defineAction({
 		handler: () =>
 			checkError(async () => {
-				return instanceToPlain(await PassengerData.getAll(db)) as Passenger[];
+				const passengers = await PassengerData.getAll(db);
+				return Promise.all(
+					passengers.map<Promise<FullPassenger>>(async (passenger) => {
+						passenger.setDatabase(db);
+						const flights = await passenger.fetchFlights();
+						return {
+							...(instanceToPlain(passenger) as Passenger),
+							flights,
+						};
+					}),
+				);
+			}),
+	}),
+
+	get: defineAction({
+		accept: "json",
+		input: passengerSchema.pick({ passenger_id: true }),
+		handler: (input) =>
+			checkError(async () => {
+				const data = await getFromId(input.passenger_id);
+				const flights = await data.fetchFlights();
+				return {
+					...(instanceToPlain(data) as Passenger),
+					flights,
+				} as FullPassenger;
 			}),
 	}),
 

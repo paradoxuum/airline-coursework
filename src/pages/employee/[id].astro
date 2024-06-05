@@ -1,0 +1,16 @@
+---
+import { EmployeeDetails } from "@/components/staff";
+import Layout from "@/layouts/Layout.astro";
+
+export const prerender = false;
+
+const { id } = Astro.params;
+
+const idNum = id !== undefined ? Number.parseInt(id) : 0;
+---
+
+<Layout title={`Airplane | Employee ${id}`}>
+  <div class="flex flex-col gap-4">
+    <EmployeeDetails id={idNum} client:only="react" />
+  </div>
+</Layout>

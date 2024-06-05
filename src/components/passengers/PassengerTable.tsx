@@ -1,12 +1,12 @@
-import { ActionsDropdown } from "@/components/ActionsDropdown";
 import { ColumnHeader } from "@/components/ColumnHeader";
 import { DataTable } from "@/components/DataTable";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { FormSheet } from "@/components/FormSheet";
+import { PassengerActions } from "@/components/passengers/PassengerActions";
 import { PassengerForm } from "@/components/passengers/PassengerForm";
 import { Button } from "@/components/ui/Button";
 import { useApiMutation } from "@/lib/useApiMutation";
-import type { Passenger } from "@/schema";
+import type { FullPassenger, Passenger } from "@/schema";
 import { client } from "@/stores/app";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -43,7 +43,7 @@ export function PassengerTable() {
 		key: ["passengers"],
 	});
 
-	const columns = useMemo<ColumnDef<Passenger>[]>(
+	const columns = useMemo<ColumnDef<FullPassenger>[]>(
 		() => [
 			{
 				accessorKey: "passenger_id",
@@ -74,12 +74,22 @@ export function PassengerTable() {
 				),
 			},
 			{
+				id: "flights",
+				header: ({ column }) => (
+					<ColumnHeader column={column} title="# Flights" />
+				),
+				cell: ({ row }) => {
+					const passenger = row.original;
+					return <p>{passenger.flights.length}</p>;
+				},
+			},
+			{
 				id: "actions",
 				cell: ({ row }) => {
 					const passenger = row.original;
 					return (
-						<ActionsDropdown
-							id={passenger.passenger_id.toString()}
+						<PassengerActions
+							data={passenger}
 							onSelect={(action) => {
 								if (action !== "update" && action !== "delete") {
 									setCurrentAction(undefined);

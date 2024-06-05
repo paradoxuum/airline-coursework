@@ -1,7 +1,7 @@
 import type { DatabaseInteractions } from "@/actions/db/database";
 import { PersonData } from "@/actions/db/person";
 import { pgp, type Database } from "@/db";
-import type { Passenger } from "@/schema";
+import type { Flight, Passenger } from "@/schema";
 import { plainToInstance } from "class-transformer";
 
 export class PassengerData
@@ -104,6 +104,16 @@ export class PassengerData
 	async delete() {
 		await this.getDatabase().result(
 			"DELETE FROM passengers WHERE passenger_id = $1",
+			[this.passenger_id],
+		);
+	}
+
+	async fetchFlights() {
+		return this.getDatabase().any<Flight>(
+			`SELECT * FROM flights
+			JOIN flight_passengers
+				ON flights.flight_id = flight_passengers.flight_id
+			WHERE flight_passengers.passenger_id = $1`,
 			[this.passenger_id],
 		);
 	}

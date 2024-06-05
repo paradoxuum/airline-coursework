@@ -49,3 +49,11 @@ export type FullFlight = Flight & {
 	crew: Employee[];
 	stops: Airport[];
 };
+
+export type FullPassenger = Passenger & {
+	flights: Flight[];
+};
+
+export type FullEmployee = Employee & {
+	flights: Flight[];
+};

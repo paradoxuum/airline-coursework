@@ -1,7 +1,7 @@
 import type { DatabaseInteractions } from "@/actions/db/database";
 import { PersonData } from "@/actions/db/person";
 import { pgp, type Database } from "@/db";
-import type { Employee } from "@/schema";
+import type { Employee, Flight } from "@/schema";
 import { Exclude, plainToInstance } from "class-transformer";
 
 export class EmployeeData
@@ -165,5 +165,15 @@ export class EmployeeData
 
 	getSalary() {
 		return this.salary;
+	}
+
+	async fetchFlights() {
+		return this.getDatabase().any<Flight>(
+			`SELECT * FROM flights
+			JOIN flight_staff
+				ON flights.flight_id = flight_staff.flight_id
+			WHERE flight_staff.employee_id = $1`,
+			[this.employee_id],
+		);
 	}
 }
