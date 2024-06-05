@@ -94,7 +94,7 @@ export function EmployeeForm({
 
 			<FormField
 				control={form.control}
-				name="phone"
+				name="salary"
 				render={({ field }) => {
 					return (
 						<FormItem>

@@ -1,6 +1,7 @@
 import { ColumnHeader } from "@/components/ColumnHeader";
 import { DataTable } from "@/components/DataTable";
 import { AssignDialog } from "@/components/details/AssignDialog";
+import { RemoveAction } from "@/components/details/RemoveAction";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import type { Airport, Employee, Passenger } from "@/schema";
@@ -14,7 +15,7 @@ import {
 	type SortingState,
 } from "@tanstack/react-table";
 import { actions } from "astro:actions";
-import { Plus, Trash } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -62,13 +63,14 @@ export function FlightDetails({ id }: { id: number }) {
 					passenger_id: passengerId,
 				}),
 			onSuccess: () => {
+				toast.success("Successfully added passenger to flight");
 				client.invalidateQueries({
 					queryKey: ["flights"],
 				});
 			},
 			onError: (err) => {
-				toast.error("Failed to assign passenger to flight");
-				console.error("Failed to assign passenger to flight", err);
+				toast.error("Failed to add passenger to flight");
+				console.error("Failed to add passenger to flight", err);
 			},
 		},
 		client,
@@ -79,13 +81,32 @@ export function FlightDetails({ id }: { id: number }) {
 			mutationFn: (employeeId: number) =>
 				actions.flight.addEmployee({ flight_id: id, employee_id: employeeId }),
 			onSuccess: () => {
+				toast.success("Successfully added employee to flight");
 				client.invalidateQueries({
 					queryKey: ["flights"],
 				});
 			},
 			onError: (err) => {
-				toast.error("Failed to assign employee to flight");
-				console.error("Failed to assign employee to flight", err);
+				toast.error("Failed to add employee to flight");
+				console.error("Failed to add employee to flight", err);
+			},
+		},
+		client,
+	);
+
+	const addStopMutation = useMutation(
+		{
+			mutationFn: (airportId: number) =>
+				actions.flight.addStop({ flight_id: id, airport_id: airportId }),
+			onSuccess: () => {
+				toast.success("Successfully added stop to flight");
+				client.invalidateQueries({
+					queryKey: ["flights"],
+				});
+			},
+			onError: (err) => {
+				toast.error("Failed to add stop to flight");
+				console.error("Failed to add stop to flight", err);
 			},
 		},
 		client,
@@ -99,6 +120,7 @@ export function FlightDetails({ id }: { id: number }) {
 					passenger_id: passengerId,
 				}),
 			onSuccess: () => {
+				toast.success("Successfully removed passenger from flight");
 				client.invalidateQueries({
 					queryKey: ["flights"],
 				});
@@ -119,6 +141,7 @@ export function FlightDetails({ id }: { id: number }) {
 					employee_id: employeeId,
 				}),
 			onSuccess: () => {
+				toast.success("Successfully removed employee from flight");
 				client.invalidateQueries({
 					queryKey: ["flights"],
 				});
@@ -139,6 +162,7 @@ export function FlightDetails({ id }: { id: number }) {
 					airport_id: airportId,
 				}),
 			onSuccess: () => {
+				toast.success("Successfully removed stop from flight");
 				client.invalidateQueries({
 					queryKey: ["airports"],
 				});
@@ -174,14 +198,11 @@ export function FlightDetails({ id }: { id: number }) {
 				cell: ({ row }) => {
 					const passenger = row.original;
 					return (
-						<Button
-							className="w-4 h-4"
+						<RemoveAction
 							onClick={() => {
 								removePassengerMutation.mutate(passenger.passenger_id);
 							}}
-						>
-							<Trash />
-						</Button>
+						/>
 					);
 				},
 			},
@@ -212,14 +233,11 @@ export function FlightDetails({ id }: { id: number }) {
 				cell: ({ row }) => {
 					const employee = row.original;
 					return (
-						<Button
-							className="w-4 h-4"
+						<RemoveAction
 							onClick={() => {
 								removeEmployeeMutation.mutate(employee.employee_id);
 							}}
-						>
-							<Trash />
-						</Button>
+						/>
 					);
 				},
 			},
@@ -244,14 +262,11 @@ export function FlightDetails({ id }: { id: number }) {
 				cell: ({ row }) => {
 					const airport = row.original;
 					return (
-						<Button
-							className="w-4 h-4"
+						<RemoveAction
 							onClick={() => {
 								removeStopMutation.mutate(airport.airport_id);
 							}}
-						>
-							<Trash />
-						</Button>
+						/>
 					);
 				},
 			},
@@ -305,6 +320,8 @@ export function FlightDetails({ id }: { id: number }) {
 						addPassengerMutation.mutate(inputId);
 					} else if (selected?.type === "employee") {
 						addEmployeeMutation.mutate(inputId);
+					} else if (selected?.type === "airport") {
+						addStopMutation.mutate(inputId);
 					}
 				}}
 			/>

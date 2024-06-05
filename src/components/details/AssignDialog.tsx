@@ -32,7 +32,12 @@ export function AssignDialog({
 
 				<div className="grid grid-cols-4 items-center gap-4">
 					<Label htmlFor="addId" className="text-right">
-						{selectedType === "passenger" ? "Passenger" : "Employee"} ID
+						{selectedType === "passenger"
+							? "Passenger"
+							: selectedType === "employee"
+								? "Employee"
+								: "Airport"}{" "}
+						ID
 					</Label>
 
 					<Input

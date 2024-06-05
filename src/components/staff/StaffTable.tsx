@@ -80,9 +80,7 @@ export function StaffTable() {
 			},
 			{
 				accessorKey: "salary",
-				header: ({ column }) => (
-					<ColumnHeader column={column} title="Address" />
-				),
+				header: ({ column }) => <ColumnHeader column={column} title="Salary" />,
 				cell: ({ row }) => {
 					const salary = row.original.salary;
 					return <p>{SALARY_FORMAT.format(salary)}</p>;
